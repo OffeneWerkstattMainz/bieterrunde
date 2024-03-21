@@ -1,0 +1,48 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="color-scheme" content="light dark" />
+    <link rel="stylesheet" href="{% static "pico.pumpkin.min.css" %}" />
+    <link rel="stylesheet" href="{% static "pico.colors.min.css" %}" />
+    <link rel="stylesheet" href="{% static "boxicons.min.css" %}">
+    <style>
+        @media (prefers-color-scheme: dark) {
+            .only-light {
+                display: none;
+            }
+            .only-dark {
+                display: block;
+            }
+
+        }
+        @media (prefers-color-scheme: light) {
+            .only-light {
+                display: block;
+            }
+            .only-dark {
+                display: none;
+            }
+        }
+        .grid-2-1 {
+            grid-template-columns: 2fr 1fr;
+        }
+        .button-wide {
+            width: 100%;
+            margin-bottom: var(--pico-spacing);
+        }
+        .currency {
+            text-align: right;
+        }
+    </style>
+    <script src="{% static 'htmx.min.js' %}" defer></script>
+    <title>Bieterrunde</title>
+</head>
+<body>
+<main class="container">
+    {% block content %}
+    {% endblock %}
+</main>
+</body>
+</html>

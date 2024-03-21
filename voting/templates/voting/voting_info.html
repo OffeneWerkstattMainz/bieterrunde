@@ -1,0 +1,31 @@
+{% extends "voting/voting_base.html" %}
+{% load qr_code %}
+{% block content %}
+    {{ block.super }}
+    <div class="grid grid-2-1">
+        <div>
+            <div id="vote-info">
+                {% include "voting/frag_voting_info.html" %}
+            </div>
+            <div id="round-info" hx-get="{% url "voting:info" voting_id=voting.id %}" hx-trigger="every 1s">
+                {% include "voting/frag_round_info.html" %}
+            </div>
+        </div>
+        <div>
+            <article>
+                <header class="pico-background-slate">
+                    Link zur Abstimmung
+                </header>
+                {% url "voting:vote" voting_id=voting.id as vote_url %}
+                <a href="{{ vote_url }}">
+                    <div class="only-light">
+                        {% qr_from_text "http://"|add:host|add:vote_url size="20" version=5 dark_color="black" light_color=None %}
+                    </div>
+                    <div class="only-dark">
+                        {% qr_from_text "http://"|add:host|add:vote_url size="20" version=5 dark_color="white" light_color=None %}
+                    </div>
+                </a>
+            </article>
+        </div>
+    </div>
+{% endblock %}

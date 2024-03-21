@@ -1,0 +1,19 @@
+{% extends "voting/voting_base.html" %}
+{% block content %}
+    {{ block.super }}
+    {% with voting.active_round as active_round %}
+        <article>
+            <header class="pico-background-pumpkin">Abstimmung{% if active_round %} - Runde {{ active_round.round_number }}{% endif %}</header>
+            {% if not voting.active_round %}
+                <p><i>Im Moment ist keine Abstimmungsrunde geöffnet</i></p>
+                <a role="button" href="{% url "voting:vote" voting_id=voting.id %}?cb={{ cb }}">Aktualisieren</a>
+            {% else %}
+                <form action="{% url "voting:vote" voting_id=voting.id voting_round_id=voting.active_round.id %}" method="post">
+                    {% csrf_token %}
+                    {{ form.as_div }}
+                    <input type="submit" value="Abstimmen">
+                </form>
+            {% endif %}
+        </article>
+    {% endwith %}
+{% endblock %}

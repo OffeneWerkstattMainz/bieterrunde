@@ -1,0 +1,13 @@
+{% extends "voting/base.html" %}
+{% block content %}
+    <h1>Bieterrunde</h1>
+    {% if votings %}
+        <article>
+            <header class="pico-background-slate">Bestehende Bieterrunden</header>
+            {% for voting in votings %}
+                <a role="button" href="{% url 'voting:manage' voting_id=voting.id %}">{{ voting.name }}</a>
+            {% endfor %}
+        </article>
+    {% endif %}
+    <a role="button" href="{% url "voting:create" %}">Neue Bieterrunde anlegen</a>
+{% endblock %}

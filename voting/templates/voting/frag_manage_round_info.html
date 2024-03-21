@@ -1,0 +1,45 @@
+{% with active_round=voting.active_or_last_round  %}{% with budget_result=active_round.budget_result %}
+    {% if active_round %}
+        <article>
+            <header class="{% if active_round.is_complete %}pico-background-green{% else %}pico-background-yellow{% endif %}">Runde {{ active_round.round_number }}</header>
+            <table>
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Mitgliedsnummer</th>
+                    <th class="currency">Summe</th>
+                </tr>
+                </thead>
+                {% for vote in active_round.votes.all %}
+                    <tr>
+                        <td></td>
+                        <td>{{ vote.member_id }}</td>
+                        <td class="currency">{{ vote.amount|floatformat:"2g" }} €</td>
+                    </tr>
+                {% endfor %}
+                <tfoot>
+                <tr>
+                    <td>Zwischensumme</td>
+                    <td></td>
+                    <td class="currency">{{ budget_result.vote_sum|floatformat:"2g" }} €</td>
+                </tr>
+                <tr>
+                    <td>Summe Richtwerte</td>
+                    <td>({{ budget_result.average_participants }} x {{ budget_result.average_contribution|floatformat:"2g" }} €)</td>
+                    <td class="currency">{{ budget_result.average_sum|floatformat:"2g" }} €</td>
+                </tr>
+                <tr>
+                    <td><b>Summe</b></td>
+                    <td></td>
+                    <td class="currency {% if budget_result.success %}pico-color-green{% else %}pico-color-red{% endif %}">{{ budget_result.result|floatformat:"2g" }} €</td>
+                </tr>
+                <tr>
+                    <td>Differenz</td>
+                    <td></td>
+                    <td class="currency {% if budget_result.success %}pico-color-green{% else %}pico-color-red{% endif %}">{{ budget_result.difference|floatformat:"2g" }} €</td>
+                </tr>
+                </tfoot>
+            </table>
+        </article>
+    {% endif %}
+{% endwith %}{% endwith %}

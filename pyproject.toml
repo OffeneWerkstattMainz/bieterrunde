@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "bieterrunde"
+version = "0.1.0"
+description = ""
+authors = ["Ulrich Petri <ulo@ulo.pe>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+django = "^5.0.3"
+django-htmx = "^1.17.3"
+django-guest-user = "^0.5.5"
+django-qr-code = "^4.0.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 99

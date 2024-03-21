@@ -1,0 +1,21 @@
+{% extends "voting/voting_base.html" %}
+{% block content %}
+    {{ block.super }}
+    <div class="grid grid-2-1">
+        <div>
+            {% include "voting/frag_voting_info.html" %}
+        </div>
+        <div>
+            <article>
+                <header class="pico-background-slate">Aktionen</header>
+                <form action="{% url "voting:new-round" voting_id=voting.id %}" method="post">{% csrf_token %} <button type="submit">Neue Runde</button></form>
+                <a role="button" class="secondary button-wide pico-background-green" href="{% url "voting:info" voting_id=voting.id %}">Info-Seite (öffentlich)</a>
+                <a role="button" class="secondary button-wide outline" href="{% url "voting:vote" voting_id=voting.id %}">Abstimmen</a>
+                <a role="button" class="secondary button-wide pico-background-blue" href="{% url "voting:export" voting_id=voting.id %}" target="_blank">Ergebnis exportieren</a>
+            </article>
+        </div>
+    </div>
+    <section hx-get="{% url "voting:manage" voting_id=voting.id %}" hx-trigger="every 1s">
+        {% include "voting/frag_manage_round_info.html" %}
+    </section>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "voting/base.html" %}
+{% block content %}
+	<h1>Bieterrunde erstellen</h1>
+    <form action="{% url 'voting:create' %}" method="post">
+        {% csrf_token %}
+        {{ form.as_div }}
+        <input type="submit" value="Erstellen">
+    </form>
+{% endblock %}

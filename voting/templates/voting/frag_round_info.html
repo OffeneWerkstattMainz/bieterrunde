@@ -1,0 +1,39 @@
+<article>
+    {% with voting.active_round as active_round %}
+        <header class="pico-background-{% if active_round %}green{% else %}sand{% endif %}">Runden</header>
+        <table>
+            <thead>
+            <tr>
+                <th>Runde</th>
+                <th>Status</th>
+                <th>Budget</th>
+                <th>Ziel erreicht</th>
+                <th></th>
+            </tr>
+            </thead>
+            {% for round in voting.rounds.all %}
+                {% with round.budget_result as budget_result %}
+                <tr class="pico-background-blue">
+                    <td>{{ round.round_number }}</td>
+                    <td>
+                        {% if round.active %}
+                            <progress value="{{ round.votes.count }}" max="{{ round.voting.voter_count }}"></progress>
+                            {{ round.percent_complete|floatformat:0 }} %
+                        {% else %}
+                            <i class="bx bx-check pico-color-cyan"></i>
+                        {% endif %}
+                    </td>
+                    <td>{% if round.is_complete %}{{ budget_result.result | floatformat:"0g" }} €{% endif %}</td>
+                    <td>
+                        {% if round.is_complete %}
+                            <b><i class="bx {% if not budget_result.success %}bx-x-circle pico-color-red{% else %}bx-check-circle pico-color-green{% endif %}"></i></b>
+                            {% if not budget_result.success %}<br><small>Fehlbetrag: <span class="pico-color-red">{{ budget_result.difference | floatformat:"2g" }} €</span></small>{% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+            {% endfor %}
+        </table>
+
+    {% endwith %}
+</article>
