@@ -40,6 +40,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${DATA_DIR:-./data}/caddy:/data
+    profiles:
+      - proxy
     labels:
       caddy.email: "${LETSENCRYPT_EMAIL}"
 
