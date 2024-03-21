@@ -1,0 +1,47 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      ALLOWED_HOSTS: "${DOMAIN}"
+      DB_HOST: db
+      SECRET_KEY_FILE: "/data/secret_key.txt"
+      STATIC_ROOT: "/data/static"
+    volumes:
+      - ${DATA_DIR:-./data}/web:/data
+      - web-static:/data/static
+    depends_on:
+      - db
+    labels:
+      caddy: "${DOMAIN}"
+      caddy.reverse_proxy: "{{ upstreams 8000 }}"
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ${DATA_DIR:-./data}/db:/var/lib/postgresql/data
+      - ./docker/postgres-init.d/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: pg_isready -U postgres
+      start_period: "30s"
+      start_interval: "2s"
+
+  caddy:
+    image: lucaslorentz/caddy-docker-proxy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DATA_DIR:-./data}/caddy:/data
+    labels:
+      caddy.email: "${LETSENCRYPT_EMAIL}"
+
+volumes:
+  web-static:
