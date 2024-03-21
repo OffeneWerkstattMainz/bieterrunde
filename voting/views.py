@@ -3,6 +3,7 @@ import string
 from csv import DictWriter
 from io import StringIO
 
+from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -13,8 +14,16 @@ from voting.forms import VotingForm, VoteForm
 from voting.models import Voting, VotingRound
 
 
+def get_voting_or_index(request, voting_id):
+    voting = Voting.objects.get(pk=voting_id)
+    if request.user != voting.owner:
+        messages.error(request, "Du bist nicht der Besitzer dieses Votings")
+        return redirect("voting:index")
+    return voting
+
+
 def index(request):
-    votings = Voting.objects.filter(owner=request.user)
+    votings = Voting.objects.filter(owner=request.user) if request.user.is_authenticated else []
     return render(request, "voting/index.html", dict(votings=votings))
 
 
@@ -35,9 +44,7 @@ def voting_create(request):
 
 @guest_user_required()
 def voting_manage(request, voting_id):
-    voting = Voting.objects.get(pk=voting_id)
-    if request.user != voting.owner:
-        return redirect("voting:index")
+    voting = get_voting_or_index(request, voting_id)
     if request.htmx:
         return render(request, "voting/frag_manage_round_info.html", dict(voting=voting))
     return render(request, "voting/voting_manage.html", dict(voting=voting))
@@ -57,12 +64,16 @@ def voting_info(request, voting_id):
 
 @guest_user_required()
 def voting_new_round(request, voting_id):
+    voting = get_voting_or_index(request, voting_id)
     if request.method != "POST":
         return redirect("voting:manage", voting_id)
-    voting = Voting.objects.get(pk=voting_id)
-    if request.user != voting.owner:
-        return redirect("voting:index")
-    voting.new_round()
+    try:
+        voting.new_round()
+    except ValueError as e:
+        messages.error(
+            request,
+            f"Neue Runde kann nicht angelegt werden, vorherige Runde ist nicht abgeschlossen.",
+        )
     return redirect("voting:manage", voting.id)
 
 
@@ -80,7 +91,8 @@ def voting_vote(request, voting_id, voting_round_id=None):
                 if voting_round.is_complete:
                     voting_round.active = False
                     voting_round.save()
-                return redirect("voting:vote-done", voting.id)
+                messages.success(request, "Deine Stimme wurde gespeichert.")
+                return redirect("voting:vote", voting.id)
         return render(request, "voting/voting_vote.html", dict(voting=voting, form=form))
     else:
         return render(
@@ -92,11 +104,6 @@ def voting_vote(request, voting_id, voting_round_id=None):
                 cb="".join(random.choices(string.ascii_letters + string.digits, k=10)),
             ),
         )
-
-
-def voting_vote_done(request, voting_id):
-    voting = Voting.objects.get(pk=voting_id)
-    return render(request, "voting/voting_vote_done.html", dict(voting=voting))
 
 
 def voting_export(request, voting_id):

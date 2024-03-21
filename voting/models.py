@@ -1,3 +1,4 @@
+import uuid
 from contextlib import suppress
 
 from django.db import models
@@ -5,7 +6,7 @@ from django.db.models import Sum, Q
 
 
 class Voting(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     datetime = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     name = models.CharField("Bezeichnung", max_length=255)
@@ -63,6 +64,9 @@ class VotingRound(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f"{self.voting.name} - Runde {self.round_number}"
+
     @property
     def is_complete(self):
         return self.votes.count() == self.voting.voter_count
@@ -98,6 +102,9 @@ class Vote(models.Model):
     class Meta:
         ordering = ["member_id"]
         unique_together = ("voting_round", "member_id")
+
+    def __str__(self):
+        return f"{self.member_id} - {self.amount}"
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)

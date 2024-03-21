@@ -1,4 +1,5 @@
 {% extends "voting/voting_base.html" %}
+{% block page-title %}Abstimmen - {% endblock %}
 {% block content %}
     {{ block.super }}
     {% with voting.active_round as active_round %}

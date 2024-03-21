@@ -5,4 +5,12 @@
         <h2>Bieterrunde</h2>
     </hgroup>
     <hr>
+    {% if messages %}
+        {% for message in messages %}
+            <article>
+                <header class="{% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}pico-background-red{% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}pico-background-yellow{% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}pico-background-green{% else %}pico-background-blue{% endif %}">Hinweis</header>
+                {{ message }}
+            </article>
+        {% endfor %}
+    {% endif %} 
 {% endblock %}

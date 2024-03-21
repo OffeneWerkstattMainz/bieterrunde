@@ -1,4 +1,5 @@
 {% extends "voting/base.html" %}
+{% block page-title %}Neu erstellen - {% endblock %}
 {% block content %}
 	<h1>Bieterrunde erstellen</h1>
     <form action="{% url 'voting:create' %}" method="post">
