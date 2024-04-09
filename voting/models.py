@@ -1,3 +1,4 @@
+import csv
 import uuid
 from contextlib import suppress
 from itertools import groupby
@@ -8,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum, Q
-
+from django.db.transaction import atomic
 
 log = getLogger(__name__)
 
@@ -39,7 +40,6 @@ class Voting(models.Model):
         return self.name
 
     def clean(self):
-        print(1)
         errors = {}
         if self.budget_goal < 1:
             errors["budget_goal"] = "Das Ziel-Budget muss größer als 0 sein."
@@ -47,9 +47,7 @@ class Voting(models.Model):
             errors["voter_count"] = (
                 "Die Teilnehmeranzahl darf nicht kleiner als die Mitgliederanzahl sein."
             )
-        print(2, self.voter_count, self.total_count, self.voter_count < self.total_count)
         if errors:
-            print(errors)
             raise ValidationError(errors)
 
     @property
@@ -83,6 +81,17 @@ class Voting(models.Model):
     @property
     def average_contribution(self):
         return self.budget_goal / self.total_count
+
+    @atomic
+    def import_bids_csv(self, csv_lines: list[str]):
+        for row in csv.reader(csv_lines, delimiter=";" if ";" in csv_lines[0] else ","):
+            if not row or not row[0].isdigit():
+                # Skip empty lines, headers and or comments
+                continue
+            for round_number, amount in enumerate(row[1:], start=1):
+                self.bids.create(member_id=row[0], round_number=round_number, amount=amount)
+        if self.bid_count > self.voter_count:
+            raise ValueError(f"Too many bids imported, {self.bid_count} > {self.voter_count}")
 
 
 class Bid(models.Model):

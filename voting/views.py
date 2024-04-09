@@ -5,6 +5,7 @@ import string
 from csv import DictWriter, DictReader
 
 from django.contrib import messages
+from django.db import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
@@ -81,9 +82,18 @@ def voting_import_bids(request, voting_id):
                 "voting/htmx/manage_import_bids.html",
                 dict(form=form, open=True),
             )
-        for row in csv.reader(codecs.iterdecode(request.FILES["bids"], "utf-8")):
-            for round_number, amount in enumerate(row[1:], start=1):
-                voting.bids.create(member_id=row[0], round_number=round_number, amount=amount)
+        # Not optimal, but should be fine for a small number of rows
+        bids_lines = request.FILES["bids"].read().decode("utf-8").splitlines()
+        try:
+            voting.import_bids_csv(bids_lines)
+        except (ValueError, IntegrityError) as e:
+            messages.error(request, str(e))
+            form.add_error("bids", str(e))
+            return render(
+                request,
+                "voting/htmx/manage_import_bids.html",
+                dict(form=form, open=True),
+            )
         return HttpResponseClientRefresh()
     return render(
         request,
