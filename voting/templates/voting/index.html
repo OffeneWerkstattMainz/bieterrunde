@@ -1,6 +1,11 @@
 {% extends "voting/base.html" %}
+{% load voting %}
 {% block content %}
     <h1>Bieterrunde</h1>
+    <div id="messages" hx-ext="remove-me">
+        {% messages %}
+    </div>
+
     {% if votings %}
         <article>
             <header class="pico-background-slate">Bestehende Bieterrunden</header>

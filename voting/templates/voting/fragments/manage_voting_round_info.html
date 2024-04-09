@@ -1,7 +1,7 @@
 {% with active_round=voting.active_or_last_round  %}{% with budget_result=active_round.budget_result %}
     {% if active_round %}
         <article>
-            <header class="{% if active_round.is_complete %}pico-background-green{% else %}pico-background-yellow{% endif %}">Runde {{ active_round.round_number }}</header>
+            <header class="{% if active_round.is_complete %}{% if budget_result.success %}pico-background-green{% else %}pico-background-red{% endif %}{% else %}pico-background-blue{% endif %}">Runde {{ active_round.round_number }}</header>
             <table>
                 <thead>
                 <tr>

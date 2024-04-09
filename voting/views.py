@@ -85,7 +85,7 @@ def voting_import_bids(request, voting_id):
             return render(
                 request,
                 "voting/htmx/manage_import_bids.html",
-                dict(form=form, open=True),
+                dict(form=form, open=True, voting=voting),
             )
         # Not optimal, but should be fine for a small number of rows
         bids_lines = request.FILES["bids"].read().decode("utf-8").splitlines()
@@ -93,12 +93,7 @@ def voting_import_bids(request, voting_id):
             voting.import_bids_csv(bids_lines)
         except (ValueError, IntegrityError) as e:
             messages.error(request, str(e))
-            form.add_error("bids", str(e))
-            return render(
-                request,
-                "voting/htmx/manage_import_bids.html",
-                dict(form=form, open=True),
-            )
+            return render(request, "voting/htmx/manage_import_bids.html", {})
         return HttpResponseClientRefresh()
     return render(
         request,

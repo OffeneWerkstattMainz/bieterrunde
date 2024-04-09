@@ -49,8 +49,32 @@
         main footer a {
             text-decoration: none;
         }
+        #messages article header {
+            position: relative;
+        }
+        #messages article header span {
+            position: absolute;
+            display: block;
+            bottom: 0;
+            right: 0;
+            height: 5px;
+            width: 20vb;
+            max-width: 100%;
+            background-color: var(--pico-color-amber-150);
+            animation: dismiss 10s forwards linear;
+        }
+        @keyframes dismiss {
+            from {
+                width: 20vb;
+            } to {
+                width: 0;
+            }
+        }
+
+
     </style>
     <script src="{% static 'htmx.min.js' %}" defer></script>
+    <script src="{% static 'htmx-remove-me.js' %}" defer></script>
     <title>{% block page-title %}{% endblock %}Bieterrunde</title>
     {% block head %}
     	

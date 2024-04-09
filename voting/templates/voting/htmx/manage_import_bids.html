@@ -1,4 +1,5 @@
 <dialog {% if open %}open{% endif %}>
+    {% if form %}
     <article>
         <header>
             Fern-Gebote importieren
@@ -10,4 +11,5 @@
             <button type="submit">Importieren</button>
         </form>
     </article>
+    {% endif %}
 </dialog>
