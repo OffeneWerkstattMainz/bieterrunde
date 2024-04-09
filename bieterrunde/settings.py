@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -152,3 +153,5 @@ def _get_version():
 
 
 PROJECT_VERSION = _get_version()
+
+CREATE_VOTING_ACCESS_CODE = os.environ.get("CREATE_VOTING_ACCESS_CODE")

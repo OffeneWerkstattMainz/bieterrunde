@@ -5,6 +5,7 @@ import string
 from csv import DictWriter, DictReader
 from http import HTTPStatus
 
+from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError
 from django.http import HttpResponse
@@ -43,6 +44,12 @@ def voting_create(request):
         else:
             return render(request, "voting/voting_create.html", dict(form=form))
     else:
+        if (
+            settings.CREATE_VOTING_ACCESS_CODE
+            and request.GET.get("code") != settings.CREATE_VOTING_ACCESS_CODE
+        ):
+            messages.error(request, "Zugangscode benötigt.")
+            return redirect("voting:index")
         return render(request, "voting/voting_create.html", dict(form=VotingForm()))
 
 
