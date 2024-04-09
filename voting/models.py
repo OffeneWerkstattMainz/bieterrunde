@@ -16,7 +16,7 @@ log = getLogger(__name__)
 
 class Voting(models.Model):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    datetime = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     name = models.CharField("Bezeichnung", max_length=255)
     budget_goal = models.DecimalField("Ziel-Budget", max_digits=10, decimal_places=2)
