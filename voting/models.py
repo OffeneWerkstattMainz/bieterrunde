@@ -22,7 +22,7 @@ class Voting(models.Model):
     voter_count = models.PositiveIntegerField(
         "Teilnehmeranzahl",
         validators=[MinValueValidator(1)],
-        help_text="Anzahl der Teilnehmer vor Ort (inkl. im voraus abgegebener Gebote).",
+        help_text="Anzahl der Teilnehmer vor Ort (inkl. im Voraus abgegebener Gebote).",
     )
     total_count = models.PositiveIntegerField(
         "Mitgliederanzahl",
@@ -31,7 +31,9 @@ class Voting(models.Model):
     )
 
     class Meta:
-        ordering = ["-datetime"]
+        verbose_name = "Bieterrunde"
+        verbose_name_plural = "Bieterrunden"
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.name
@@ -92,8 +94,10 @@ class Bid(models.Model):
     amount = models.DecimalField("Gebot", max_digits=10, decimal_places=2)
 
     class Meta:
-        ordering = ["member_id"]
-        unique_together = ("member_id", "round_number")
+        verbose_name = "Fern-Gebot"
+        verbose_name_plural = "Fern-Gebote"
+        ordering = ["voting", "member_id", "round_number"]
+        unique_together = ("voting", "member_id", "round_number")
 
     def __str__(self):
         return f"M{self.member_id}: #{self.round_number} - {self.amount} €"
@@ -108,6 +112,8 @@ class VotingRound(models.Model):
     bids_applied = models.BooleanField("Gebote angewendet", default=False)
 
     class Meta:
+        verbose_name = "Abstimmungsrunde"
+        verbose_name_plural = "Abstimmungsrunden"
         ordering = ["voting", "round_number"]
         constraints = [
             models.UniqueConstraint(fields=["voting", "round_number"], name="unique_round_number"),
@@ -189,11 +195,10 @@ class Vote(models.Model):
     amount = models.DecimalField("Beitrag", max_digits=10, decimal_places=2)
 
     class Meta:
+        verbose_name = "Stimme"
+        verbose_name_plural = "Stimmen"
         ordering = ["member_id"]
         unique_together = ("voting_round", "member_id")
 
     def __str__(self):
         return f"{self.member_id} - {self.amount}"
-
-    def validate_unique(self, exclude=None):
-        super().validate_unique(exclude=exclude)
