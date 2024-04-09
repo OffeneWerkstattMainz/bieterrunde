@@ -13,3 +13,8 @@ def voting_info(voting: Voting):
 @register.inclusion_tag("voting/tags/round_info.html")
 def round_info(voting: Voting):
     return dict(voting=voting)
+
+
+@register.inclusion_tag("voting/tags/messages.html", takes_context=True)
+def messages(context: dict):
+    return context

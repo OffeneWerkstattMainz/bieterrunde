@@ -105,6 +105,8 @@ AUTHENTICATION_BACKENDS = [
     "guest_user.backends.GuestBackend",
 ]
 
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 

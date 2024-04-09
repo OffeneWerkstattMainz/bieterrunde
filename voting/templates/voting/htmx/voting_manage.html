@@ -1,6 +1,12 @@
+{% load voting %}
 {% include "voting/fragments/manage_voting_round_info.html" %}
 {% with active_round=voting.active_or_last_round %}
     <div id="buttons" hx-swap-oob="true">
         {% include "voting/fragments/manage_buttons.html" %}
     </div>
 {% endwith %}
+{% if messages %}
+    <div id="messages" hx-swap-oob="true">
+        {% messages %}
+    </div>
+{% endif %}

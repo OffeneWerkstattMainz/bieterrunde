@@ -3,6 +3,7 @@ import csv
 import random
 import string
 from csv import DictWriter, DictReader
+from http import HTTPStatus
 
 from django.contrib import messages
 from django.db import IntegrityError
@@ -34,21 +35,18 @@ def index(request):
 def voting_create(request):
     if request.method == "POST":
         form = VotingForm(request.POST)
-        print("a")
         if form.is_valid():
-            print("b")
             voting = form.save(commit=False)
             voting.owner = request.user
             voting.save()
             return redirect("voting:manage", voting.id)
         else:
-            print(len(form.errors))
             return render(request, "voting/voting_create.html", dict(form=form))
     else:
         return render(request, "voting/voting_create.html", dict(form=VotingForm()))
 
 
-@guest_user_required()
+@allow_guest_user()
 def voting_manage(request, voting_id):
     voting = get_voting_or_index(request, voting_id)
     if request.htmx:
@@ -68,7 +66,7 @@ def voting_info(request, voting_id):
     )
 
 
-@guest_user_required()
+@allow_guest_user()
 def voting_import_bids(request, voting_id):
     if not request.htmx:
         return redirect("voting:manage", voting_id)
@@ -102,7 +100,7 @@ def voting_import_bids(request, voting_id):
     )
 
 
-@guest_user_required()
+@allow_guest_user()
 def voting_new_round(request, voting_id):
     voting = get_voting_or_index(request, voting_id)
     if request.method != "POST":
@@ -146,13 +144,16 @@ def voting_vote(request, voting_id, voting_round_id=None):
         )
 
 
+@allow_guest_user()
 def voting_export(request, voting_id):
-    voting = Voting.objects.get(pk=voting_id)
-    voting_round = voting.rounds.order_by("-round_number")[0]
+    voting = get_voting_or_index(request, voting_id)
+    voting_round = voting.active_or_last_round
     if not voting_round.is_complete:
-        raise ValueError("Voting round is not complete")
+        messages.error(request, "Die Runde ist nicht abgeschlossen.")
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
     if voting_round.budget_result["result"] < voting.budget_goal:
-        raise ValueError("Budget goal not reached")
+        messages.error(request, "Ziel-Budget nicht erreicht.")
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
     response = HttpResponse(
         content_type="text/csv",
         headers={
