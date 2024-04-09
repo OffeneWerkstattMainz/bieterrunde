@@ -1,0 +1,11 @@
+<article>
+    <header class="pico-background-slate">Aktionen</header>
+    <form action="{% url "voting:new-round" voting_id=voting.id %}" method="post">
+        {% csrf_token %}
+        <button type="submit" {% if active_round and not active_round.is_complete %}disabled{% endif %}>Neue Runde</button>
+    </form>
+    <a role="button" class="secondary button-wide pico-background-green" href="{% url "voting:info" voting_id=voting.id %}">Info-Seite (öffentlich)</a>
+    <a role="button" class="secondary button-wide pico-background-purple" href="{% url "voting:import-bids" voting_id=voting.id %}" hx-boost="true" hx-target="next dialog" hx-swap="outerHTML" {% if voting.rounds.count > 0 or voting.bids.count > 0 %}disabled{% endif %}>Fern-Gebote importieren</a>
+    <a role="button" class="button-wide outline" href="{% url "voting:vote" voting_id=voting.id %}" target="_blank" {% if not active_round or active_round.is_complete %}disabled{% endif %}>Abstimmungs-Seite</a>
+    <a role="button" class="secondary button-wide pico-background-blue" href="{% url "voting:export" voting_id=voting.id %}" target="_blank" {% if not active_round.is_complete or not active_round.budget_result.success %}disabled{% endif %}>Ergebnis exportieren</a>
+</article>

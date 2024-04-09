@@ -1,22 +1,23 @@
 {% extends "voting/voting_base.html" %}
+{% load voting %}
 {% block page-title %}{{ voting.name }} - {% endblock %}
 {% block content %}
     {{ block.super }}
     <div class="grid grid-2-1">
         <div>
-            {% include "voting/frag_voting_info.html" %}
-        </div>
-        <div>
+            {% voting_info voting %}
             <article>
-                <header class="pico-background-slate">Aktionen</header>
-                <form action="{% url "voting:new-round" voting_id=voting.id %}" method="post">{% csrf_token %} <button type="submit">Neue Runde</button></form>
-                <a role="button" class="secondary button-wide pico-background-green" href="{% url "voting:info" voting_id=voting.id %}">Info-Seite (öffentlich)</a>
-                <a role="button" class="secondary button-wide outline" href="{% url "voting:vote" voting_id=voting.id %}">Abstimmen</a>
-                <a role="button" class="secondary button-wide pico-background-blue" href="{% url "voting:export" voting_id=voting.id %}" target="_blank">Ergebnis exportieren</a>
+                <header class="pico-background-slate">Fern-Gebote</header>
             </article>
         </div>
+        {% with active_round=voting.active_or_last_round %}
+        <div id="buttons">
+            {% include "voting/fragments/manage_buttons.html" %}
+        </div>
+        {% endwith %}
     </div>
     <section hx-get="{% url "voting:manage" voting_id=voting.id %}" hx-trigger="every 1s">
-        {% include "voting/frag_manage_round_info.html" %}
+        {% include "voting/fragments/manage_voting_round_info.html" %}
     </section>
+    <dialog></dialog>
 {% endblock %}

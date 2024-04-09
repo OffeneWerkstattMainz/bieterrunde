@@ -1,10 +1,12 @@
 {% extends "voting/base.html" %}
 {% block content %}
-    <hgroup>
-        <h1 class="pico-color-pumpkin">{{ voting.name }}</h1>
-        <h2>Bieterrunde</h2>
-    </hgroup>
+    <header>
+        <hgroup>
+            <h1 class="pico-color-pumpkin">{{ voting.name }}</h1>
+            <h2>Bieterrunde</h2>
+        </hgroup>
     <hr>
+    </header>
     {% if messages %}
         {% for message in messages %}
             <article>

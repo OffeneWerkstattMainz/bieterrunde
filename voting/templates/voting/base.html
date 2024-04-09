@@ -35,14 +35,35 @@
         .currency {
             text-align: right;
         }
+        ul.errorlist li {
+            color: var(--pico-del-color);
+            font-size: smaller;
+        }
+        main footer {
+            text-align: right;
+        }
+        main footer small {
+            color: var(--pico-muted-color);
+            font-size: smaller;
+        }
+        main footer a {
+            text-decoration: none;
+        }
     </style>
     <script src="{% static 'htmx.min.js' %}" defer></script>
     <title>{% block page-title %}{% endblock %}Bieterrunde</title>
+    {% block head %}
+    	
+    {% endblock %}
 </head>
 <body>
 <main class="container">
     {% block content %}
     {% endblock %}
+    <footer>
+        <hr>
+        <small>Version {{ PROJECT_VERSION }} | Quelltext auf <a href="https://github.com/ulope/bieterrunde" class="bx bxl-github">GitHub</a></small>
+    </footer>
 </main>
 </body>
 </html>

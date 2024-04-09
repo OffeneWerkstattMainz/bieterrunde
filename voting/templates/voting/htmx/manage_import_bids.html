@@ -1,0 +1,13 @@
+<dialog {% if open %}open{% endif %}>
+    <article>
+        <header>
+            Fern-Gebote importieren
+            <button aria-label="close" rel="prev" hx-on:click="htmx.find('dialog').close();"></button>
+        </header>
+        <form hx-post="{% url "voting:import-bids" voting_id=voting.id %}" hx-target="closest dialog" hx-swap="outerHTML" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_div }}
+            <button type="submit">Importieren</button>
+        </form>
+    </article>
+</dialog>

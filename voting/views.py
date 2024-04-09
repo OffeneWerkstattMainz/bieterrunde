@@ -1,16 +1,18 @@
+import codecs
+import csv
 import random
 import string
-from csv import DictWriter
-from io import StringIO
+from csv import DictWriter, DictReader
 
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.text import slugify
+from django_htmx.http import HttpResponseClientRefresh
 from guest_user.decorators import allow_guest_user, guest_user_required
 
-from voting.forms import VotingForm, VoteForm
+from voting.forms import VotingForm, VoteForm, BidImportForm
 from voting.models import Voting, VotingRound
 
 
@@ -31,12 +33,15 @@ def index(request):
 def voting_create(request):
     if request.method == "POST":
         form = VotingForm(request.POST)
+        print("a")
         if form.is_valid():
+            print("b")
             voting = form.save(commit=False)
             voting.owner = request.user
             voting.save()
             return redirect("voting:manage", voting.id)
         else:
+            print(len(form.errors))
             return render(request, "voting/voting_create.html", dict(form=form))
     else:
         return render(request, "voting/voting_create.html", dict(form=VotingForm()))
@@ -46,7 +51,7 @@ def voting_create(request):
 def voting_manage(request, voting_id):
     voting = get_voting_or_index(request, voting_id)
     if request.htmx:
-        return render(request, "voting/frag_manage_round_info.html", dict(voting=voting))
+        return render(request, "voting/htmx/voting_manage.html", dict(voting=voting))
     return render(request, "voting/voting_manage.html", dict(voting=voting))
 
 
@@ -54,11 +59,36 @@ def voting_info(request, voting_id):
     voting = Voting.objects.get(pk=voting_id)
     if request.htmx:
         if request.htmx.trigger == "round-info":
-            return render(request, "voting/frag_round_info.html", dict(voting=voting))
+            return render(request, "voting/tags/round_info.html", dict(voting=voting))
         else:
             raise ValueError("Unknown trigger")
     return render(
         request, "voting/voting_info.html", dict(voting=voting, host=request.META["HTTP_HOST"])
+    )
+
+
+@guest_user_required()
+def voting_import_bids(request, voting_id):
+    if not request.htmx:
+        return redirect("voting:manage", voting_id)
+
+    voting = get_voting_or_index(request, voting_id)
+    if request.method == "POST":
+        form = BidImportForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(
+                request,
+                "voting/htmx/manage_import_bids.html",
+                dict(form=form, open=True),
+            )
+        for row in csv.reader(codecs.iterdecode(request.FILES["bids"], "utf-8")):
+            for round_number, amount in enumerate(row[1:], start=1):
+                voting.bids.create(member_id=row[0], round_number=round_number, amount=amount)
+        return HttpResponseClientRefresh()
+    return render(
+        request,
+        "voting/htmx/manage_import_bids.html",
+        dict(form=BidImportForm(), voting=voting, open=True),
     )
 
 

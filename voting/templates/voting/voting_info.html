@@ -1,15 +1,16 @@
 {% extends "voting/voting_base.html" %}
 {% load qr_code %}
+{% load voting %}
 {% block page-title %}{{ voting.name }} - {% endblock %}
 {% block content %}
     {{ block.super }}
     <div class="grid grid-2-1">
         <div>
             <div id="vote-info">
-                {% include "voting/frag_voting_info.html" %}
+                {% voting_info voting %}
             </div>
             <div id="round-info" hx-get="{% url "voting:info" voting_id=voting.id %}" hx-trigger="every 1s">
-                {% include "voting/frag_round_info.html" %}
+                {% round_info voting %}
             </div>
         </div>
         <div>
