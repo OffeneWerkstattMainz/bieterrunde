@@ -9,7 +9,7 @@ from voting.models import Voting
 class Command(BaseCommand):
     def handle(self, *args, **options):
         count, deleted = Voting.objects.filter(
-            created_at__lte=timezone.now() - timedelta(hours=2)
+            created_at__lte=timezone.now() - timedelta(days=14)
         ).delete()
         self.stdout.write(
             self.style.SUCCESS("Successfully cleaned up votings")
