@@ -62,6 +62,10 @@ class Voting(models.Model):
         return self.rounds.order_by("-round_number").first()
 
     @property
+    def local_voter_count(self):
+        return self.voter_count - self.bid_count
+
+    @property
     def bid_count(self):
         # Since bids fall back to the last round given, we can just count the bids of the first round
         return self.bids.filter(round_number=1).count()
@@ -90,8 +94,8 @@ class Voting(models.Model):
                 continue
             for round_number, amount in enumerate(row[1:], start=1):
                 self.bids.create(member_id=row[0], round_number=round_number, amount=amount)
-        if self.bid_count > self.voter_count:
-            raise ValueError(f"Too many bids imported, {self.bid_count} > {self.voter_count}")
+        self.voter_count += self.bid_count
+        self.save()
 
 
 class Bid(models.Model):
