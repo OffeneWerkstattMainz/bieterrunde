@@ -5,17 +5,17 @@
             <tr>
                 <th>Budget-Ziel</th>
                 <th>Teilnehmer</th>
-                <th>Mitglieder</th>
                 <th>Fern-Gebote</th>
+                <th>Mitglieder</th>
                 <th>Richtwert</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>{{ voting.budget_goal | floatformat:"g" }} €</td>
-                <td>{{ voting.voter_count }}</td>
-                <td>{{ voting.total_count }}</td>
+                <td>{{ voting.local_voter_count }}</td>
                 <td>{{ voting.bid_count }}</td>
+                <td>{{ voting.total_count }}</td>
                 <td>{{ voting.average_contribution|floatformat:"2g" }} €</td>
             </tr>
         </tbody>
