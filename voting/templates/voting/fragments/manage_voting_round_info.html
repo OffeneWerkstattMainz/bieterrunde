@@ -14,7 +14,7 @@
                     <tr>
                         <td></td>
                         <td>{{ vote.member_id }}</td>
-                        <td class="currency">{{ vote.amount|floatformat:"2g" }} €</td>
+                        <td class="currency">{% if not active_round.is_complete %}<small><a href="{% url "admin:voting_vote_change" object_id=vote.id %}"><i class="bx bx-pencil pico-color-yellow"></i></a></small> {% endif %}{{ vote.amount|floatformat:"2g" }} €</td>
                     </tr>
                 {% endfor %}
                 <tfoot>

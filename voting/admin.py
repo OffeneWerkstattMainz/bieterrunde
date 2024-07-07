@@ -27,10 +27,15 @@ class VotingRoundAdmin(admin.ModelAdmin):
     inlines = [VoteInline]
 
 
+class VoteAdmin(admin.ModelAdmin):
+    pass
+
+
 class BidAdmin(admin.ModelAdmin):
     list_display = ("id", "voting", "member_id", "round_number", "amount")
 
 
 admin.site.register(Voting, VotingAdmin)
 admin.site.register(VotingRound, VotingRoundAdmin)
+admin.site.register(Vote, VoteAdmin)
 admin.site.register(Bid, BidAdmin)
