@@ -83,7 +83,7 @@ class Voting(models.Model):
         return new_round
 
     @property
-    def average_contribution(self):
+    def average_contribution_target(self):
         return self.budget_goal / self.total_count
 
     @atomic
@@ -186,13 +186,16 @@ class VotingRound(models.Model):
     @property
     def budget_result(self):
         vote_sum = self.votes.aggregate(sum=Sum("amount"))["sum"] or 0
-        average_contribution = self.voting.average_contribution
-        average_sum = average_contribution * (self.voting.total_count - self.voting.voter_count)
+        average_contribution_target = self.voting.average_contribution_target
+        average_sum = average_contribution_target * (
+            self.voting.total_count - self.voting.voter_count
+        )
         result = dict(
             vote_sum=vote_sum,
             average_sum=average_sum,
-            average_contribution=average_contribution,
+            average_contribution_target=average_contribution_target,
             average_participants=self.voting.total_count - self.voting.voter_count,
+            average_contribution_voters=vote_sum / self.voting.voter_count,
             result=vote_sum + average_sum,
             difference=(vote_sum + average_sum) - self.voting.budget_goal,
             success=vote_sum + average_sum >= self.voting.budget_goal,

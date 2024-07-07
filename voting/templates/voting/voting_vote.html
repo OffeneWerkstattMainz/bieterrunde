@@ -3,7 +3,7 @@
 {% block content %}
     {{ block.super }}
     {% with voting.active_round as active_round %}
-        <article>
+        <article {% if not voting.active_round %}hx-get="{% url "voting:vote" voting_id=voting.id %}" hx-trigger="load delay:5s" hx-swap="outerHTML" hx-select="article"{% endif %}>
             <header class="pico-background-pumpkin">Abstimmung{% if active_round %} - Runde {{ active_round.round_number }}{% endif %}</header>
             {% if not voting.active_round %}
                 <p><i>Im Moment ist keine Abstimmungsrunde geöffnet</i></p>

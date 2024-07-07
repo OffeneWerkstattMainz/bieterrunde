@@ -23,11 +23,19 @@
                             <i class="bx bx-check pico-color-cyan"></i>
                         {% endif %}
                     </td>
-                    <td>{% if round.is_complete %}{{ budget_result.result | floatformat:"0g" }} €{% endif %}</td>
+                    <td>{% if round.is_complete %}{{ budget_result.result | floatformat:"2g" }} €{% endif %}</td>
                     <td>
                         {% if round.is_complete %}
                             <b><i class="bx {% if not budget_result.success %}bx-x-circle pico-color-red{% else %}bx-check-circle pico-color-green{% endif %}"></i></b>
-                            {% if not budget_result.success %}<br><small>Fehlbetrag: <span class="pico-color-red">{{ budget_result.difference | floatformat:"2g" }} €</span></small>{% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if round.is_complete %}
+                            {% if budget_result.success %}
+                                <small>Durchschnitts&shy;beitrag: <span class="pico-color-green">{{ budget_result.average_contribution_voters|floatformat:"2g" }} €</span></small>
+                            {% else %}
+                                <small>Fehlbetrag: <span class="pico-color-red">{{ budget_result.difference | floatformat:"2g" }} €</span></small>
+                            {% endif %}
                         {% endif %}
                     </td>
                 </tr>
