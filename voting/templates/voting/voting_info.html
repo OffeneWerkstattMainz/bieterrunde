@@ -20,7 +20,7 @@
                 </header>
                 {% url "voting:vote" voting_id=voting.id as vote_url %}
                 {% with vote_url_full=request.scheme|add:"://"|add:request.get_host|add:vote_url %}
-                <a href="{{ vote_url }}">
+                <a href="{{ vote_url }}" class="vote-qr">
                     <div class="only-light">
                         {% qr_from_text vote_url_full size="20" version=5 dark_color="black" light_color=None %}
                     </div>
