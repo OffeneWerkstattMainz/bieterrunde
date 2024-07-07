@@ -19,6 +19,7 @@
                         {% if round.active %}
                             <progress value="{{ round.votes.count }}" max="{{ round.voting.voter_count }}"></progress>
                             {{ round.percent_complete|floatformat:0 }} %
+                            <small><br>({{ round.votes.count }} / {{ round.voting.voter_count }})</small>
                         {% else %}
                             <i class="bx bx-check pico-color-cyan"></i>
                         {% endif %}
