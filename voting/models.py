@@ -93,6 +93,8 @@ class Voting(models.Model):
                 # Skip empty lines, headers and or comments
                 continue
             for round_number, amount in enumerate(row[1:], start=1):
+                if not amount:
+                    continue
                 self.bids.create(member_id=row[0], round_number=round_number, amount=amount)
         self.voter_count += self.bid_count
         self.save()
@@ -178,6 +180,10 @@ class VotingRound(models.Model):
         if self.id is None:
             return False
         return self.votes.count() == self.voting.voter_count
+
+    @property
+    def is_active_or_last(self):
+        return self == self.voting.active_or_last_round
 
     @property
     def percent_complete(self):

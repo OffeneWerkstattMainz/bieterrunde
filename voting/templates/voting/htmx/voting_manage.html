@@ -1,5 +1,5 @@
 {% load voting %}
-{% include "voting/fragments/manage_voting_round_info.html" %}
+{% manage_round_info voting_round=voting.active_or_last_round %}
 {% with active_round=voting.active_or_last_round %}
     <div id="buttons" hx-swap-oob="true">
         {% include "voting/fragments/manage_buttons.html" %}

@@ -147,15 +147,17 @@ def voting_vote(request, voting_id, voting_round_id=None):
 
 
 @allow_guest_user()
-def voting_export(request, voting_id):
+def voting_export(request, voting_id: str, round_id: int = None):
     voting = get_voting_or_index(request, voting_id)
-    voting_round = voting.active_or_last_round
+    if round_id:
+        voting_round = voting.rounds.get(pk=round_id)
+    else:
+        voting_round = voting.active_or_last_round
     if not voting_round.is_complete:
         messages.error(request, "Die Runde ist nicht abgeschlossen.")
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
     if voting_round.budget_result["result"] < voting.budget_goal:
-        messages.error(request, "Ziel-Budget nicht erreicht.")
-        return HttpResponse(status=HTTPStatus.NO_CONTENT)
+        messages.warning(request, "Ziel-Budget nicht erreicht.")
     response = HttpResponse(
         content_type="text/csv",
         headers={

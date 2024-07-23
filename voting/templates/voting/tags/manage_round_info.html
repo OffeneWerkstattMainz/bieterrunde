@@ -1,8 +1,8 @@
-{% with active_round=voting.active_or_last_round  %}{% with budget_result=active_round.budget_result %}
-    {% if active_round %}
-        <details open>
-            <summary role="button" class="{% if active_round.is_complete %}{% if budget_result.success %}pico-background-green{% else %}pico-background-red{% endif %}{% else %}pico-background-blue{% endif %}">Runde {{ active_round.round_number }}</summary>
-            {% for vote in active_round.votes.all %}
+{% with budget_result=voting_round.budget_result %}
+    {% if voting_round %}
+        <details {% if voting_round.is_active_or_last_round %}open{% endif %}>
+            <summary role="button" class="{% if voting_round.is_complete %}{% if budget_result.success %}pico-background-green{% else %}pico-background-red{% endif %}{% else %}pico-background-blue{% endif %}">Runde {{ voting_round.round_number }}</summary>
+            {% for vote in voting_round.votes.all %}
                 <article class="vote">
                     <header class="{% if vote.amount < vote.voting_round.voting.average_contribution_target %}pico-background-yellow{% else %}pico-background-green{% endif %}"># {{ vote.member_id }}</header>
                     <p>{{ vote.amount|floatformat:"2g" }} €</p>
@@ -32,6 +32,7 @@
                 </tr>
                 </tfoot>
             </table>
+            <a role="button" class="secondary button-wide pico-background-blue" href="{% url "voting:export" voting_id=voting_round.voting.id round_id=voting_round.id %}" target="_blank" {% if not active_round.is_complete %}disabled{% endif %}>Ergebnis exportieren</a>
         </details>
     {% endif %}
-{% endwith %}{% endwith %}
+{% endwith %}

@@ -16,8 +16,17 @@
         </div>
         {% endwith %}
     </div>
+    {% for round in voting.rounds.all %}
+        {% if round != voting.active_or_last_round %}
+            <section>
+                {% manage_round_info voting_round=round %}
+            </section>
+        {% endif %}
+    {% endfor %}
+    
     <section hx-get="{% url "voting:manage" voting_id=voting.id %}" hx-trigger="every 1s">
-        {% include "voting/fragments/manage_voting_round_info.html" %}
+        {% manage_round_info voting_round=voting.active_or_last_round %}
+{#        {% include "voting/fragments/manage_voting_round_info.html" %}#}
     </section>
     <dialog></dialog>
 {% endblock %}
