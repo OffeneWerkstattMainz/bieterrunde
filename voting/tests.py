@@ -48,16 +48,16 @@ def test_bids():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "csv_string, expected_bid_count, raises_exception",
+    "csv_string, expected_bid_count, expected_voter_count, raises_exception",
     [
-        ("1,1,2\n", 1, False),
-        ("1;1;2\n2;1;2;3", 2, False),
-        ("id;r1;r2;r3\n1;1;2\n2;1;2;3", 2, False),
-        ("1,1\n2,1\n3,1", 0, ValueError),
-        ("1,1\n1,1", 0, IntegrityError),
+        ("1,1,2\n", 1, 3, False),
+        ("1;1;2\n2;1;2;3", 2, 4, False),
+        ("id;r1;r2;r3\n1;1;2\n2;1;2;3", 2, 4, False),
+        ("1,1\n2,1\n3,1", 3, 5, False),
+        ("1,1\n1,1", 0, 0, IntegrityError),
     ],
 )
-def test_bids_import_csv(csv_string, expected_bid_count, raises_exception):
+def test_bids_import_csv(csv_string, expected_bid_count, expected_voter_count, raises_exception):
     owner = User.objects.create_user("owner")
     voting = Voting.objects.create(
         name="Test Voting",
@@ -70,3 +70,4 @@ def test_bids_import_csv(csv_string, expected_bid_count, raises_exception):
     with pytest.raises(raises_exception) if raises_exception else nullcontext():
         voting.import_bids_csv(csv_string.splitlines())
         assert voting.bid_count == expected_bid_count
+        assert voting.voter_count == expected_voter_count
