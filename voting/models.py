@@ -90,7 +90,7 @@ class Voting(models.Model):
     def import_bids_csv(self, csv_lines: list[str]):
         for row in csv.reader(csv_lines, delimiter=";" if ";" in csv_lines[0] else ","):
             if not row or not row[0].isdigit():
-                # Skip empty lines, headers and or comments
+                # Skip empty lines, headers and/or comments
                 continue
             for round_number, amount in enumerate(row[1:], start=1):
                 if not amount:
@@ -109,8 +109,8 @@ class Bid(models.Model):
     amount = models.DecimalField("Gebot", max_digits=10, decimal_places=2)
 
     class Meta:
-        verbose_name = "Fern-Gebot"
-        verbose_name_plural = "Fern-Gebote"
+        verbose_name = "Absenz-Gebot"
+        verbose_name_plural = "Absenz-Gebote"
         ordering = ["voting", "member_id", "round_number"]
         unique_together = ("voting", "member_id", "round_number")
 
@@ -154,7 +154,7 @@ class VotingRound(models.Model):
 
     def apply_bids(self):
         if self.bids_applied:
-            raise TypeError("Bids already applied")
+            raise ValueError("Bids already applied")
         bids_by_member_id = {
             k: list(v)
             for k, v in groupby(

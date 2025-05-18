@@ -3,7 +3,7 @@ FROM python:3.11
 RUN mkdir /app
 WORKDIR /app
 
-RUN pip install poetry
+RUN pip install "poetry<2.0"
 
 COPY poetry.lock /app
 COPY pyproject.toml /app
