@@ -190,6 +190,14 @@ class VotingRound(models.Model):
         return self.votes.count() / self.voting.voter_count * 100
 
     @property
+    def percent_complete_local(self):
+        return self.local_vote_count / self.voting.local_voter_count * 100
+
+    @property
+    def local_vote_count(self):
+        return self.votes.count() - self.voting.bid_count
+
+    @property
     def budget_result(self):
         vote_sum = self.votes.aggregate(sum=Sum("amount"))["sum"] or 0
         average_contribution_target = self.voting.average_contribution_target

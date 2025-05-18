@@ -17,9 +17,9 @@
                     <td>{{ round.round_number }}</td>
                     <td>
                         {% if round.active %}
-                            <progress value="{{ round.votes.count }}" max="{{ round.voting.voter_count }}"></progress>
-                            {{ round.percent_complete|floatformat:0 }} %
-                            <small><br>({{ round.votes.count }} / {{ round.voting.voter_count }})</small>
+                            <progress value="{{ round.local_vote_count }}" max="{{ round.voting.local_voter_count }}"></progress>
+                            {{ round.percent_complete_local|floatformat:0 }} %
+                            <small><br>({{ round.votes.count }} / {{ round.voting.voter_count }} = {{ round.percent_complete|floatformat:0 }} %)</small>
                         {% else %}
                             <i class="bx bx-check pico-color-cyan"></i>
                         {% endif %}
