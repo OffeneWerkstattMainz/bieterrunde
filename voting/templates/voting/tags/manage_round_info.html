@@ -1,6 +1,6 @@
 {% with budget_result=voting_round.budget_result %}
     {% if voting_round %}
-        <details {% if voting_round.is_active_or_last_round %}open{% endif %}>
+        <details {% if voting_round.is_active_or_last %}open{% endif %}>
             <summary role="button" class="{% if voting_round.is_complete %}{% if budget_result.success %}pico-background-green{% else %}pico-background-red{% endif %}{% else %}pico-background-blue{% endif %}">Runde {{ voting_round.round_number }}</summary>
             {% for vote in voting_round.votes.all %}
                 <article class="vote">
