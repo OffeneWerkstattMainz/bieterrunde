@@ -1,16 +1,11 @@
 from functools import partial
-from pprint import pprint
 
-import click
 import djclick
-import httpx
 from django.core.management import CommandError
 from djclick.params import ModelInstance
 
 from voting.models import VotingRound
-
-
-API_BASE = "https://owm.webling.ch/api/1"
+from voting.utils.webling_api import WeblingAPI
 
 
 _R = partial(djclick.style, fg="red")
@@ -37,13 +32,7 @@ def command(
     override_average_contribution: int | None,
 ):
     if dry_run:
-
-        def _always_yes(x):
-            print()
-            return "y"
-
-        click.termui.visible_prompt_func = _always_yes
-
+        djclick.secho("DRY RUN - NO DATA WILL BE CHANGED", fg="red")
     djclick.confirm(
         f"{_Y('Are you sure you want to export the voting round')} '{_G(voting_round_id)}'?",
         abort=True,
@@ -54,13 +43,15 @@ def command(
 
         if not webling_group_id:
             djclick.secho("Member groups found:", fg="green")
-            for group_id, (title, members) in membergroups.items():
-                djclick.echo(f"  - {_Y(group_id)}: {_G(title)} ({_B(len(members))} members)")
+            for group_id, group in membergroups.items():
+                djclick.echo(
+                    f"  - {_Y(group_id)}: {_G(group.title)} ({_B(len(group.members))} members)"
+                )
             group_id = djclick.prompt("Select the member group to export to", type=int)
         else:
             group_id = webling_group_id
             djclick.echo(
-                f"{_G('Using Webling group')} {_Y(group_id)} - {_G(membergroups[group_id][0])} ({_B(len(membergroups[group_id][1]))} members)"
+                f"{_G('Using Webling group')} {_Y(group_id)} - {_G(membergroups[group_id].title)} ({_B(len(membergroups[group_id].members))} members)"
             )
 
         if group_id not in membergroups:
@@ -94,7 +85,7 @@ def command(
             + _Y(str(len(group_members)))
             + _B("\n  - Voting users: ")
             + _Y(str(len(voting_members)))
-            + _B("\n  - Average value users: ")
+            + _B("\n  - Non voting users (auto assigning average value): ")
             + _Y(str(len(group_members) - len(voting_members)))
             + _B("\n  - Average value: ")
             + _Y(f"{average_contribution:.2f} €")
@@ -102,63 +93,37 @@ def command(
 
         djclick.confirm("Do you want to continue?", abort=True)
 
-        votes = dict(
-            (member_id, round(amount))
+        votes = {
+            member_id: round(amount)
             for member_id, amount in voting_round_id.votes.values_list("member_id", "amount")
-        )
+        }
 
         new_contribution_values = {
-            member_id: votes.get(member["properties"]["Mitglieder ID"], average_contribution)
-            for member_id, member in group_members.items()
+            member_api_id: votes.get(member["properties"]["Mitglieder ID"], average_contribution)
+            for member_api_id, member in group_members.items()
         }
 
         with djclick.progressbar(
             new_contribution_values.items(), label=_Y("Exporting...")
         ) as new_contribution_values_progress:
-            for member_id, amount in new_contribution_values_progress:
+            for member_api_id, amount in new_contribution_values_progress:
                 if not dry_run:
-                    api.update_member_contribution(member_id, amount)
+                    api.update_member_contribution(member_api_id, amount)
 
-
-class WeblingAPI:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-
-    def __enter__(self):
-        self.client = httpx.Client()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.client.close()
-
-    def fetch_membergroups(self) -> dict[int, tuple[str, list[int]]]:
-        response = self.client.get(
-            f"{API_BASE}/membergroup", headers={"apikey": self.api_key}, params={"format": "full"}
-        )
-        response.raise_for_status()
-
-        return {
-            group["id"]: (
-                group["properties"]["title"],
-                group.get("children", {}).get("member", []),
+        non_voting_member_api_ids = [
+            member["id"]
+            for member in group_members.values()
+            if member["properties"]["Mitglieder ID"] not in voting_members
+        ]
+        if non_voting_member_api_ids:
+            group_title = f"Kein Gebot - {voting_round_id.voting.name}"
+            djclick.echo(
+                f"{_Y('Creating new member group')} '{_G(group_title)}' {_Y('for non-voting users')}"
             )
-            for group in response.json()
-        }
+            if not dry_run:
+                api.create_member_group(
+                    non_voting_member_api_ids, group_title, parent_group_id=group_id
+                )
 
-    def fetch_members(self, parent_group: int) -> dict[int, dict]:
-        response = self.client.get(
-            f"{API_BASE}/member",
-            headers={"apikey": self.api_key},
-            params={"format": "full", "filter": f"$parents.$id={parent_group}"},
-        )
-        response.raise_for_status()
-
-        return {member["id"]: member for member in response.json()}
-
-    def update_member_contribution(self, member_id: int, contribution: int):
-        response = self.client.put(
-            f"{API_BASE}/member/{member_id}",
-            headers={"apikey": self.api_key},
-            json={"properties": {"Mitgliederbeitrag": contribution}},
-        )
-        response.raise_for_status()
+    if dry_run:
+        djclick.secho("DRY RUN - NO DATA HAS BEEN CHANGED", fg="red")
