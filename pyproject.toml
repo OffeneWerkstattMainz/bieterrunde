@@ -6,7 +6,7 @@ authors = ["Ulrich Petri <ulo@ulo.pe>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 django = "^5.0.3"
 django-htmx = "^1.17.3"
 django-guest-user = "^0.5.5"
