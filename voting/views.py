@@ -135,6 +135,10 @@ def voting_vote(request, voting_id, voting_round_id=None):
                 return redirect("voting:vote", voting.id)
         return render(request, "voting/voting_vote.html", dict(voting=voting, form=form))
     else:
+        if request.htmx and active_round and active_round.id == voting_round_id:
+            # If it's an htmx request with the same round id as the active one (meaning the user hasn't sent the form yet)
+            # return 204 to prevent the form from being replaced (and potentially losing user input)
+            return HttpResponse(status=HTTPStatus.NO_CONTENT)
         return render(
             request,
             "voting/voting_vote.html",
