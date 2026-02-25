@@ -83,6 +83,16 @@
     </style>
     <script src="{% static 'htmx.min.js' %}" defer></script>
     <script src="{% static 'htmx-remove-me.js' %}" defer></script>
+    {% if debug %}<script>
+        window.onload = function () {
+            htmx.logger = function (elt, event, data) {
+                if (console) {
+                    console.log(event, elt, data);
+                }
+            };
+            htmx.logAll();
+        };
+    </script>{% endif %}
     <title>{% block page-title %}{% endblock %}Bieterrunde</title>
     {% block head %}
     	
