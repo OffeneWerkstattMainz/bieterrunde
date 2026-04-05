@@ -31,4 +31,4 @@ class VoteForm(ModelForm):
 
 
 class BidImportForm(InvalidFormMixin, Form):
-    bids = FileField(label="Fern-Gebote")
+    bids = FileField(label="Absenz-Gebote")

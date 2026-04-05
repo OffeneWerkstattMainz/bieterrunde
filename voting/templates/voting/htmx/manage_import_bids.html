@@ -2,7 +2,7 @@
     {% if form %}
     <article>
         <header>
-            Fern-Gebote importieren
+            Absenz-Gebote importieren
             <button aria-label="close" rel="prev" hx-on:click="htmx.find('dialog').close();"></button>
         </header>
         <form hx-post="{% url "voting:import-bids" voting_id=voting.id %}" hx-target="closest dialog" hx-swap="outerHTML" enctype="multipart/form-data">
