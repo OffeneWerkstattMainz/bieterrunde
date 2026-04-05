@@ -54,6 +54,8 @@ def voting_create(request):
 @allow_guest_user()
 def voting_manage(request, voting_id):
     voting = get_voting_or_index(request, voting_id)
+    if isinstance(voting, HttpResponse):
+        return voting
     if request.htmx:
         return render(request, "voting/htmx/voting_manage.html", dict(voting=voting))
     return render(request, "voting/voting_manage.html", dict(voting=voting))
@@ -77,6 +79,8 @@ def voting_import_bids(request, voting_id):
         return redirect("voting:manage", voting_id)
 
     voting = get_voting_or_index(request, voting_id)
+    if isinstance(voting, HttpResponse):
+        return voting
     if request.method == "POST":
         form = BidImportForm(request.POST, request.FILES)
         if not form.is_valid():
@@ -103,14 +107,16 @@ def voting_import_bids(request, voting_id):
 @allow_guest_user()
 def voting_new_round(request, voting_id):
     voting = get_voting_or_index(request, voting_id)
+    if isinstance(voting, HttpResponse):
+        return voting
     if request.method != "POST":
         return redirect("voting:manage", voting_id)
     try:
         voting.new_round()
-    except ValueError as e:
+    except ValueError:
         messages.error(
             request,
-            f"Neue Runde kann nicht angelegt werden, vorherige Runde ist nicht abgeschlossen.",
+            "Neue Runde kann nicht angelegt werden, vorherige Runde ist nicht abgeschlossen.",
         )
     return redirect("voting:manage", voting.id)
 
@@ -151,6 +157,8 @@ def voting_vote(request, voting_id, voting_round_id=None):
 @allow_guest_user()
 def voting_export(request, voting_id: str, round_id: int = None):
     voting = get_voting_or_index(request, voting_id)
+    if isinstance(voting, HttpResponse):
+        return voting
     if round_id:
         voting_round = voting.rounds.get(pk=round_id)
     else:
