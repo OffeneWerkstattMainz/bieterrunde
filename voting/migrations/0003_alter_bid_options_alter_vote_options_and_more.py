@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("voting", "0002_votinground_bids_applied_alter_voting_total_count_and_more"),
     ]

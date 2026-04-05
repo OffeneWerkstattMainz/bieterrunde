@@ -1,6 +1,8 @@
+# ruff: noqa: F405
 import os
 
-from .settings import *
+from .settings import *  # noqa: F403
+
 
 DEBUG = False
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")

@@ -1,8 +1,6 @@
-import codecs
-import csv
 import random
 import string
-from csv import DictWriter, DictReader
+from csv import DictWriter
 from http import HTTPStatus
 
 from django.conf import settings
@@ -13,7 +11,7 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRefresh
-from guest_user.decorators import allow_guest_user, guest_user_required
+from guest_user.decorators import allow_guest_user
 
 from voting.forms import VotingForm, VoteForm, BidImportForm
 from voting.models import Voting, VotingRound

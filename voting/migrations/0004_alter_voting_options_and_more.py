@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("voting", "0003_alter_bid_options_alter_vote_options_and_more"),
     ]

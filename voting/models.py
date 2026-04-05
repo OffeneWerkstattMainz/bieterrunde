@@ -8,7 +8,7 @@ from operator import attrgetter
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.db.transaction import atomic
 
 log = getLogger(__name__)
@@ -23,12 +23,12 @@ class Voting(models.Model):
     voter_count = models.PositiveIntegerField(
         "Teilnehmeranzahl",
         validators=[MinValueValidator(1)],
-        help_text="Anzahl der Teilnehmer vor Ort (inkl. im Voraus abgegebener Gebote).",
+        help_text="Anzahl der Teilnehmer vor Ort",
     )
     total_count = models.PositiveIntegerField(
         "Mitgliederanzahl",
         validators=[MinValueValidator(1)],
-        help_text="Anzahl der Mitglieder insgesamt.",
+        help_text="Anzahl der Mitglieder insgesamt",
     )
 
     class Meta:
@@ -54,6 +54,7 @@ class Voting(models.Model):
     def active_round(self) -> "VotingRound | None":
         with suppress(VotingRound.DoesNotExist):
             return self.rounds.get(active=True)
+        return None
 
     @property
     def active_or_last_round(self):
