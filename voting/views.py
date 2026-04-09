@@ -13,7 +13,15 @@ from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRefresh
 from guest_user.decorators import allow_guest_user
 
-from voting.forms import VotingForm, VoteForm, BidImportForm, VoterRegistrationForm
+from voting.forms import (
+    VotingForm,
+    VoteForm,
+    BidImportForm,
+    VoterRegistrationForm,
+    VotingVoterAddForm,
+    VotingVoterQuickAddForm,
+    VotingVoterEditForm,
+)
 from voting.models import Bid, Voter, Voting, VotingRound, VotingVoter
 from voting.utils.hmac_auth import verify_member_token
 
@@ -181,6 +189,160 @@ def voting_export(request, voting_id: str, round_id: int = None):
     for vote in voting_round.votes.all():
         writer.writerow({"member_id": vote.member_id, "amount": vote.amount})
     return response
+
+
+@allow_guest_user()
+def voting_voters(request, voting_id):
+    if not request.htmx:
+        return redirect("voting:manage", voting_id)
+    voting = get_voting_or_index(request, voting_id)
+    if isinstance(voting, HttpResponse):
+        return voting
+    voting_voters = (
+        VotingVoter.objects.filter(voting=voting)
+        .select_related("voter")
+        .order_by("voter__member_id")
+    )
+    voter_list = []
+    for vv in voting_voters:
+        bid_count = Bid.objects.filter(voting=voting, member_id=vv.voter.member_id).count()
+        vv.bid_count = bid_count
+        voter_list.append(vv)
+    return render(
+        request,
+        "voting/htmx/manage_voters.html",
+        dict(
+            voting=voting,
+            voting_voters=voter_list,
+            quick_form=VotingVoterQuickAddForm(voting=voting),
+            open=True,
+        ),
+    )
+
+
+@allow_guest_user()
+def voting_voter_add(request, voting_id):
+    if not request.htmx:
+        return redirect("voting:manage", voting_id)
+    voting = get_voting_or_index(request, voting_id)
+    if isinstance(voting, HttpResponse):
+        return voting
+    if request.method == "POST":
+        form = VotingVoterAddForm(request.POST, voting=voting)
+        if not form.is_valid():
+            return render(
+                request,
+                "voting/htmx/manage_voter_add.html",
+                dict(form=form, open=True, voting=voting),
+            )
+        member_id = form.cleaned_data["member_id"]
+        absent_from_round = form.cleaned_data.get("absent_from_round")
+        voter = Voter.objects.get(member_id=member_id)
+        VotingVoter.objects.create(voting=voting, voter=voter, absent_from_round=absent_from_round)
+        for round_number, amount in form.get_bids().items():
+            Bid.objects.update_or_create(
+                voting=voting,
+                member_id=member_id,
+                round_number=round_number,
+                defaults={"amount": amount},
+            )
+        return HttpResponseClientRefresh()
+    return render(
+        request,
+        "voting/htmx/manage_voter_add.html",
+        dict(form=VotingVoterAddForm(voting=voting), voting=voting, open=True),
+    )
+
+
+@allow_guest_user()
+def voting_voter_quick_add(request, voting_id):
+    if not request.htmx:
+        return redirect("voting:manage", voting_id)
+    voting = get_voting_or_index(request, voting_id)
+    if isinstance(voting, HttpResponse):
+        return voting
+    if request.method == "POST":
+        quick_form = VotingVoterQuickAddForm(request.POST, voting=voting)
+        if not quick_form.is_valid():
+            voting_voters = (
+                VotingVoter.objects.filter(voting=voting)
+                .select_related("voter")
+                .order_by("voter__member_id")
+            )
+            voter_list = []
+            for vv in voting_voters:
+                vv.bid_count = Bid.objects.filter(
+                    voting=voting, member_id=vv.voter.member_id
+                ).count()
+                voter_list.append(vv)
+            return render(
+                request,
+                "voting/htmx/manage_voters.html",
+                dict(
+                    voting=voting,
+                    voting_voters=voter_list,
+                    quick_form=quick_form,
+                    open=True,
+                ),
+            )
+        member_ids = quick_form.cleaned_data["member_ids"]
+        voters = Voter.objects.filter(member_id__in=member_ids)
+        for voter in voters:
+            VotingVoter.objects.create(voting=voting, voter=voter)
+        return HttpResponseClientRefresh()
+    return redirect("voting:voter-add", voting_id=voting_id)
+
+
+@allow_guest_user()
+def voting_voter_edit(request, voting_id, voting_voter_id):
+    if not request.htmx:
+        return redirect("voting:manage", voting_id)
+    voting = get_voting_or_index(request, voting_id)
+    if isinstance(voting, HttpResponse):
+        return voting
+    voting_voter = get_object_or_404(VotingVoter, pk=voting_voter_id, voting=voting)
+    if request.method == "POST":
+        form = VotingVoterEditForm(request.POST)
+        if not form.is_valid():
+            return render(
+                request,
+                "voting/htmx/manage_voter_edit.html",
+                dict(form=form, open=True, voting=voting, voting_voter=voting_voter),
+            )
+        voting_voter.absent_from_round = form.cleaned_data.get("absent_from_round")
+        voting_voter.save()
+        voter = voting_voter.voter
+        voter.name = form.cleaned_data["name"]
+        voter.save()
+        submitted_bids = form.get_bids()
+        for round_number, amount in submitted_bids.items():
+            Bid.objects.update_or_create(
+                voting=voting,
+                member_id=voter.member_id,
+                round_number=round_number,
+                defaults={"amount": amount},
+            )
+        Bid.objects.filter(voting=voting, member_id=voter.member_id).exclude(
+            round_number__in=submitted_bids.keys()
+        ).delete()
+        return HttpResponseClientRefresh()
+    existing_bids = dict(
+        Bid.objects.filter(voting=voting, member_id=voting_voter.voter.member_id).values_list(
+            "round_number", "amount"
+        )
+    )
+    initial = {
+        "name": voting_voter.voter.name,
+        "absent_from_round": voting_voter.absent_from_round,
+    }
+    for round_number, amount in existing_bids.items():
+        initial[f"bid_round_{round_number}"] = amount
+    form = VotingVoterEditForm(initial=initial)
+    return render(
+        request,
+        "voting/htmx/manage_voter_edit.html",
+        dict(form=form, open=True, voting=voting, voting_voter=voting_voter),
+    )
 
 
 def voter_registration(request, voting_id, member_id, auth_token):

@@ -1,0 +1,21 @@
+<dialog {% if open %}open{% endif %}>
+    {% if form %}
+    <article>
+        <header>
+            Teilnehmer hinzufügen
+            <button aria-label="close" rel="prev" hx-on:click="htmx.find('dialog').close();"></button>
+        </header>
+        <form hx-post="{% url "voting:voter-add" voting_id=voting.id %}" hx-target="closest dialog" hx-swap="outerHTML">
+            {% csrf_token %}
+            {{ form.as_div }}
+            <div class="grid" hx-boost="true">
+                <a role="button" class="secondary"
+                   href="{% url "voting:voters" voting_id=voting.id %}"
+                   hx-target="closest dialog"
+                   hx-swap="outerHTML">Zurück</a>
+                <button type="submit">Hinzufügen</button>
+            </div>
+        </form>
+    </article>
+    {% endif %}
+</dialog>
