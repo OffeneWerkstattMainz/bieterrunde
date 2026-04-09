@@ -1,0 +1,49 @@
+{% extends "voting/voting_base.html" %}
+{% block page-title %}Anmeldung - {% endblock %}
+{% block content %}
+    {{ block.super }}
+    <article>
+        <header class="pico-background-slate">Anmeldung - {{ voter.name }}</header>
+        <p>Mitgliedsnummer: <b>{{ voter.member_id }}</b></p>
+        <p>
+            Bitte teile uns mit ob du an der Mitgliederversamlung <b>"{{ voting.name }}"</b> am <b>{{ voting.date }}</b> teilnehmen wirst.
+        </p>
+        <p>
+            Wenn du <u>nicht</u> teilnehmen kannst gib <b>unbedingt deine Gebote für die Beitragsrunde ein</b>.
+        </p>
+        <blockquote class="pico-color-orange">
+            <b><u>Falls du keine Gebote eingibst und nicht an der Bieterrunde vor Ort teilnimmst wird dein Beitrag automatisch auf den neuen Richtwert von {{ voting.average_contribution_target }} € gesetzt!</u></b>
+        </blockquote>
+
+        <p>
+            Wenn du dir nicht sicher bist, ob du teilnehmen wirst, gib bitte sicherheitshalber Gebote ein.
+            Du kannst trotzdem an der MV teilnehmen.
+        </p>
+        <hr>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                {% if field.name == "bid_round_1" %}
+                    <fieldset role="group">
+                {% endif %}
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {{ field }}
+                    {% if field.errors %}
+                        <small id="{{ field.name }}_invalid">{% for error in field.errors %}
+                            {{ error }}
+                        {% endfor %}
+                        </small>
+                    {% endif %}
+                </label>
+                {% if field.name == "attending" %}
+                    <hr>
+                {% endif %} 
+                {% if field.name == "bid_round_3" %}
+                    </fieldset>
+                {% endif %}
+            {% endfor %}
+            <input type="submit" value="Speichern">
+        </form>
+    </article>
+{% endblock %}

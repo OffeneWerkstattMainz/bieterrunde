@@ -13,4 +13,9 @@ urlpatterns = [
     path("info/<uuid:voting_id>", views.voting_info, name="info"),
     path("vote/<uuid:voting_id>", views.voting_vote, name="vote"),
     path("vote/<uuid:voting_id>/<int:voting_round_id>/", views.voting_vote, name="vote"),
+    path(
+        "registration/<uuid:voting_id>/<int:member_id>/<str:auth_token>/",
+        views.voter_registration,
+        name="voter-registration",
+    ),
 ]

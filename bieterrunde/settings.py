@@ -146,10 +146,16 @@ LOGGING = {
 
 def _get_version():
     import tomllib
+    from subprocess import check_output, CalledProcessError
+
+    try:
+        return check_output(["git", "describe", "--always", "--tags", "--dirty"]).decode("utf-8").strip()
+    except (CalledProcessError, FileNotFoundError):
+        pass
 
     with BASE_DIR.joinpath("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
-    return pyproject["tool"]["poetry"]["version"]
+    return pyproject["project"]["version"]
 
 
 PROJECT_VERSION = _get_version()

@@ -25,6 +25,10 @@
                 display: none;
             }
         }
+        :where(input,select,textarea,fieldset,.grid)[aria-invalid=true]+small {
+            /* Fix error message disappearing under input field */
+            padding-top: 1rem;
+        }
         .grid-2-1 {
             grid-template-columns: 2fr 1fr;
         }

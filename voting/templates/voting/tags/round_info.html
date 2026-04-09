@@ -15,30 +15,28 @@
                 {% with round.budget_result as budget_result %}
                 <tr class="pico-background-blue">
                     <td>{{ round.round_number }}</td>
-                    <td>
+                    <td {% if round.active %}colspan="4"{% endif %}>
                         {% if round.active %}
                             <progress value="{{ round.local_vote_count }}" max="{{ round.voting.local_voter_count }}"></progress>
-                            {{ round.percent_complete_local|floatformat:0 }} %
-                            <small><br>({{ round.votes.count }} / {{ round.voting.voter_count }} = {{ round.percent_complete|floatformat:0 }} %)</small>
+{#                            <p>{{ round.percent_complete_local|floatformat:0 }} %</p>#}
+{#                            <small><br>({{ round.votes.count }} / {{ round.voting.voter_count }} = {{ round.percent_complete|floatformat:0 }} %)</small>#}
                         {% else %}
                             <i class="bx bx-check pico-color-cyan"></i>
                         {% endif %}
                     </td>
-                    <td>{% if round.is_complete %}{{ budget_result.result | floatformat:"2g" }} €{% endif %}</td>
-                    <td>
-                        {% if round.is_complete %}
+                    {% if round.is_complete %}
+                        <td>{{ budget_result.result | floatformat:"2g" }} €</td>
+                        <td>
                             <b><i class="bx {% if not budget_result.success %}bx-x-circle pico-color-red{% else %}bx-check-circle pico-color-green{% endif %}"></i></b>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if round.is_complete %}
+                        </td>
+                        <td>
                             {% if budget_result.success %}
                                 <small>Durchschnitts&shy;beitrag: <span class="pico-color-green">{{ budget_result.average_contribution_voters|floatformat:"2g" }} €</span></small>
                             {% else %}
                                 <small>Fehlbetrag: <span class="pico-color-red">{{ budget_result.difference | floatformat:"2g" }} €</span></small>
                             {% endif %}
-                        {% endif %}
-                    </td>
+                        </td>
+                    {% endif %}
                 </tr>
                 {% endwith %}
             {% endfor %}

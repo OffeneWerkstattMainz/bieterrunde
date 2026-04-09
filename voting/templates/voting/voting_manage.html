@@ -26,7 +26,6 @@
     
     <section hx-get="{% url "voting:manage" voting_id=voting.id %}" hx-trigger="every 1s">
         {% manage_round_info voting_round=voting.active_or_last_round %}
-{#        {% include "voting/fragments/manage_voting_round_info.html" %}#}
     </section>
     <dialog></dialog>
 {% endblock %}
