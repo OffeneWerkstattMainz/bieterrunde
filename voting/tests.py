@@ -494,3 +494,149 @@ def test_voter_registration_post_not_attending(client, voting):
     vv = VotingVoter.objects.get(voting=voting, voter=voter)
     assert vv.absent_from_round == 1  # not attending
     assert voting.bids.filter(member_id=303, round_number=1).first().amount == Decimal("45")
+
+
+# ---------------------------------------------------------------------------
+# Voter management view tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_voters_list_htmx(client, owner, voting):
+    client.force_login(owner)
+    response = client.get(
+        reverse("voting:voters", args=[voting.id]),
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "Teilnehmer verwalten" in content
+
+
+@pytest.mark.django_db
+def test_voters_list_non_htmx_redirects(client, owner, voting):
+    client.force_login(owner)
+    response = client.get(reverse("voting:voters", args=[voting.id]))
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_voter_add_htmx(client, owner, voting):
+    client.force_login(owner)
+    # Create a Voter that is not yet linked to this voting
+    make_voter(999, "Pre-imported Voter")
+    response = client.post(
+        reverse("voting:voter-add", args=[voting.id]),
+        {"member_id": "999", "absent_from_round": "2", "bid_round_1": "30"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "Teilnehmer verwalten" in content
+    assert "Pre-imported Voter" in content
+    vv = VotingVoter.objects.get(voting=voting, voter__member_id=999)
+    assert vv.absent_from_round == 2
+    assert Bid.objects.filter(
+        voting=voting, member_id=999, round_number=1
+    ).first().amount == Decimal("30")
+
+
+@pytest.mark.django_db
+def test_voter_add_nonexistent_member_shows_error(client, owner, voting):
+    client.force_login(owner)
+    response = client.post(
+        reverse("voting:voter-add", args=[voting.id]),
+        {"member_id": "9999"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    assert "HX-Refresh" not in response
+    assert "Kein Mitglied" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_voter_add_duplicate_shows_error(client, owner, voting):
+    # Voter with member_id=1 already exists in the voting fixture
+    client.force_login(owner)
+    response = client.post(
+        reverse("voting:voter-add", args=[voting.id]),
+        {"member_id": "1"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    assert "HX-Refresh" not in response
+    assert "bereits" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_voter_quick_add_htmx(client, owner, voting):
+    client.force_login(owner)
+    make_voter(901, "Quick A")
+    make_voter(902, "Quick B")
+    response = client.post(
+        reverse("voting:voter-quick-add", args=[voting.id]),
+        {"member_ids": "901, 902"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "Teilnehmer verwalten" in content
+    assert "Quick A" in content
+    assert "Quick B" in content
+    assert VotingVoter.objects.filter(voting=voting, voter__member_id=901).exists()
+    assert VotingVoter.objects.filter(voting=voting, voter__member_id=902).exists()
+
+
+@pytest.mark.django_db
+def test_voter_quick_add_unknown_member(client, owner, voting):
+    client.force_login(owner)
+    response = client.post(
+        reverse("voting:voter-quick-add", args=[voting.id]),
+        {"member_ids": "8888"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    assert "HX-Refresh" not in response
+    assert "Unbekannte" in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_voter_edit_htmx(client, owner, voting):
+    client.force_login(owner)
+    vv = VotingVoter.objects.filter(voting=voting).first()
+    response = client.post(
+        reverse("voting:voter-edit", args=[voting.id, vv.id]),
+        {
+            "name": "Updated Name",
+            "absent_from_round": "1",
+            "bid_round_1": "25",
+            "bid_round_2": "35",
+        },
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "Teilnehmer verwalten" in content
+    assert "Updated Name" in content
+    vv.refresh_from_db()
+    assert vv.absent_from_round == 1
+    vv.voter.refresh_from_db()
+    assert vv.voter.name == "Updated Name"
+    assert Bid.objects.get(
+        voting=voting, member_id=vv.voter.member_id, round_number=1
+    ).amount == Decimal("25")
+    assert Bid.objects.get(
+        voting=voting, member_id=vv.voter.member_id, round_number=2
+    ).amount == Decimal("35")
+
+
+@pytest.mark.django_db
+def test_voter_management_owner_only(client, voting):
+    other = User.objects.create_user("other_vm", password="pass")
+    client.force_login(other)
+    response = client.get(
+        reverse("voting:voters", args=[voting.id]),
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 302
+    assert response["Location"] == reverse("voting:index")
