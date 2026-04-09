@@ -1,3 +1,4 @@
+import datetime
 import io
 from contextlib import nullcontext
 from decimal import Decimal
@@ -27,6 +28,7 @@ def make_voting(owner, voter_count=2, total_count=2, budget_goal=Decimal("100"))
         budget_goal=budget_goal,
         total_count=total_count,
         owner=owner,
+        date=datetime.date(2024, 1, 1),
     )
     for i in range(1, voter_count + 1):
         voter = make_voter(i)
@@ -52,6 +54,7 @@ def test_bids():
         budget_goal=100,
         total_count=2,
         owner=owner,
+        date=datetime.date(2024, 1, 1),
     )
     v1 = make_voter(1)
     v2 = make_voter(2)
@@ -105,6 +108,7 @@ def test_bids_import_csv(csv_string, expected_bid_count, expected_voter_count, r
         budget_goal=100,
         total_count=10,
         owner=owner,
+        date=datetime.date(2024, 1, 1),
     )
 
     with pytest.raises(raises_exception) if raises_exception else nullcontext():
@@ -126,6 +130,7 @@ def test_absent_voter_without_bids_gets_average():
         budget_goal=Decimal("100"),
         total_count=4,
         owner=owner,
+        date=datetime.date(2024, 1, 1),
     )
     v1 = make_voter(101)
     v2 = make_voter(102)
@@ -159,6 +164,7 @@ def test_voter_leaves_between_rounds():
         budget_goal=Decimal("100"),
         total_count=2,
         owner=owner,
+        date=datetime.date(2024, 1, 1),
     )
     v1 = make_voter(201)
     v2 = make_voter(202)
@@ -220,6 +226,7 @@ def test_new_round_raises_when_no_voters():
         budget_goal=100,
         total_count=2,
         owner=owner,
+        date=datetime.date(2024, 1, 1),
     )
     with pytest.raises(ValueError, match="Keine Teilnehmer"):
         voting.new_round()
@@ -323,7 +330,7 @@ def test_voting_create_post_valid(client, owner):
     client.force_login(owner)
     response = client.post(
         reverse("voting:create"),
-        {"name": "Neue Runde", "budget_goal": "500", "total_count": "5"},
+        {"name": "Neue Runde", "budget_goal": "500", "total_count": "5", "date": "2024-01-01"},
     )
     assert response.status_code == 302
     assert Voting.objects.filter(name="Neue Runde", owner=owner).exists()
@@ -334,7 +341,7 @@ def test_voting_create_post_invalid(client, owner):
     client.force_login(owner)
     response = client.post(
         reverse("voting:create"),
-        {"name": "Test", "budget_goal": "0", "total_count": "3"},
+        {"name": "Test", "budget_goal": "0", "total_count": "3", "date": "2024-01-01"},
     )
     assert response.status_code == 200  # re-renders form
 
