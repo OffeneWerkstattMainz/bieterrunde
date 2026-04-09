@@ -1,0 +1,15 @@
+[tasks.run-dev]
+description = "Run a local dev server"
+run = "uv run python manage.py runserver 0.0.0.0:8080"
+
+[tasks.build-docker]
+description = "Build the docker image"
+run = "docker build -f docker/Dockerfile -t bieterrunde ."
+
+[tasks.djshell]
+description = "Start a django python shell"
+run = "uv run python manage.py shell"
+
+[tasks.djm]
+description = "Run a django manage.py command"
+run = "uv run python manage.py {{arg(name='commmands', var=true)}}"

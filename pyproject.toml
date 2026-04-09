@@ -1,35 +1,46 @@
-[tool.poetry]
+[project]
 name = "bieterrunde"
 version = "0.7.4"
 description = ""
-authors = ["Ulrich Petri <ulo@ulo.pe>"]
+authors = [{ name = "Ulrich Petri", email = "ulo@ulo.pe" }]
+requires-python = ">=3.12,<4"
 readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "django>=5.0.3,<6",
+    "django-htmx>=1.17.3,<2",
+    "django-guest-user>=0.5.5,<0.6",
+    "django-qr-code>=4.0.1,<5",
+    "django-click>=2.4.0,<3",
+    "httpx>=0.27.0,<0.28",
+    "more-itertools>=10.7.0,<11",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-django = "^5.0.3"
-django-htmx = "^1.17.3"
-django-guest-user = "^0.5.5"
-django-qr-code = "^4.0.1"
-django-click = "^2.4.0"
-httpx = "^0.27.0"
-more-itertools = "^10.7.0"
+[dependency-groups]
+dev = [
+    "pytest-django>=4.8.0,<5",
+    "bpython>=0.25,<0.26",
+    "ruff>=0.15.9",
+]
+prod = [
+    "gunicorn>=21.2.0,<22",
+    "psycopg2>=2.9.11,<3",
+    "whitenoise>=6.6.0,<7",
+]
 
+[tool.uv]
 
-[tool.poetry.group.dev.dependencies]
-black = "^24.3.0"
-pytest-django = "^4.8.0"
-bpython = "^0.25"
-
-
-[tool.poetry.group.prod.dependencies]
-gunicorn = "^21.2.0"
-psycopg2 = "^2.9.11"
-whitenoise = "^6.6.0"
+[tool.uv.build-backend]
+module-root = ""
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
 
 [tool.black]
 line-length = 99

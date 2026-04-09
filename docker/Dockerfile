@@ -3,18 +3,18 @@ FROM python:3.13
 RUN mkdir /app
 WORKDIR /app
 
-RUN pip install "poetry<2.0"
+RUN pip install uv
 
-COPY poetry.lock /app
+COPY uv.lock /app
 COPY pyproject.toml /app
 
 # Install dependencies
-RUN poetry install --with prod --without dev --no-directory
+RUN uv sync --group prod --no-group dev --no-install-project
 
 COPY . /app
 
 # Install the application
-RUN poetry install --with prod --without dev
+RUN uv sync --group prod --no-group dev
 
 ENV DJANGO_SETTINGS_MODULE=bieterrunde.settings_prod
 EXPOSE 8000
