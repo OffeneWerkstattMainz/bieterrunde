@@ -6,15 +6,16 @@ from http import HTTPStatus
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.http import HttpResponse, HttpResponseForbidden
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRefresh
 from guest_user.decorators import allow_guest_user
 
-from voting.forms import VotingForm, VoteForm, BidImportForm
-from voting.models import Voting, VotingRound
+from voting.forms import VotingForm, VoteForm, BidImportForm, VoterRegistrationForm
+from voting.models import Bid, Voter, Voting, VotingRound, VotingVoter
+from voting.utils.hmac_auth import verify_member_token
 
 
 def get_voting_or_index(request, voting_id):
@@ -113,11 +114,8 @@ def voting_new_round(request, voting_id):
         return redirect("voting:manage", voting_id)
     try:
         voting.new_round()
-    except ValueError:
-        messages.error(
-            request,
-            "Neue Runde kann nicht angelegt werden, vorherige Runde ist nicht abgeschlossen.",
-        )
+    except ValueError as e:
+        messages.error(request, str(e))
     return redirect("voting:manage", voting.id)
 
 
@@ -183,3 +181,49 @@ def voting_export(request, voting_id: str, round_id: int = None):
     for vote in voting_round.votes.all():
         writer.writerow({"member_id": vote.member_id, "amount": vote.amount})
     return response
+
+
+def voter_registration(request, voting_id, member_id, auth_token):
+    if not verify_member_token(member_id, auth_token):
+        return HttpResponseForbidden("Ungültiger Authentifizierungstoken.")
+
+    voting = get_object_or_404(Voting, pk=voting_id)
+    voter = get_object_or_404(Voter, member_id=member_id)
+    voting_voter, vv_created = VotingVoter.objects.get_or_create(voting=voting, voter=voter)
+
+    if request.method == "POST":
+        form = VoterRegistrationForm(request.POST)
+        if form.is_valid():
+            attending = form.cleaned_data["attending"]
+            voting_voter.absent_from_round = None if attending else 1
+            voting_voter.save()
+
+            for round_number, amount in form.get_bids().items():
+                Bid.objects.update_or_create(
+                    voting=voting,
+                    member_id=member_id,
+                    round_number=round_number,
+                    defaults={"amount": amount},
+                )
+
+            messages.success(request, "Deine Angaben wurden gespeichert.")
+            return redirect(
+                "voting:voter-registration",
+                voting_id=voting_id,
+                member_id=member_id,
+                auth_token=auth_token,
+            )
+    else:
+        existing_bids = dict(
+            voting.bids.filter(member_id=member_id).values_list("round_number", "amount")
+        )
+        initial = {"attending": voting_voter.absent_from_round is None if not vv_created else False}
+        for round_number, amount in existing_bids.items():
+            initial[f"bid_round_{round_number}"] = amount
+        form = VoterRegistrationForm(initial=initial)
+
+    return render(
+        request,
+        "voting/voter_registration.html",
+        dict(voting=voting, voter=voter, voting_voter=voting_voter, form=form),
+    )

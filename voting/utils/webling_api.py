@@ -59,6 +59,14 @@ class WeblingAPI:
         )
         response.raise_for_status()
 
+    def update_member_auth_token(self, member_id: int, token: str):
+        response = self.client.put(
+            f"{API_BASE}/member/{member_id}",
+            headers={"apikey": self.api_key},
+            json={"properties": {"Bieterrunden-Auth-Token": token}},
+        )
+        response.raise_for_status()
+
     def create_member_group(
         self, member_ids: list[int], title: str, parent_group_id: int | None = None
     ) -> int:

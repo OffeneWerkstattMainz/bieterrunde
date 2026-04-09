@@ -8,22 +8,40 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.urls import reverse
 
-from voting.models import Bid, Vote, Voting, VotingRound
+from voting.models import Bid, Vote, Voter, Voting, VotingRound, VotingVoter
+from voting.utils.hmac_auth import compute_member_token, verify_member_token
+
+
+def make_voter(member_id, name=None):
+    """Get or create a global Voter object."""
+    voter, _ = Voter.objects.get_or_create(
+        member_id=member_id,
+        defaults={"name": name or f"Voter {member_id}"},
+    )
+    return voter
 
 
 def make_voting(owner, voter_count=2, total_count=2, budget_goal=Decimal("100")):
-    return Voting.objects.create(
+    voting = Voting.objects.create(
         name="Test Voting",
         budget_goal=budget_goal,
-        voter_count=voter_count,
         total_count=total_count,
         owner=owner,
     )
+    for i in range(1, voter_count + 1):
+        voter = make_voter(i)
+        VotingVoter.objects.create(voting=voting, voter=voter)
+    return voting
 
 
 def cast_votes(voting_round, amounts):
     for i, amount in enumerate(amounts, start=1):
         Vote.objects.create(voting_round=voting_round, member_id=i, amount=amount)
+
+
+# ---------------------------------------------------------------------------
+# Bids (absent voters)
+# ---------------------------------------------------------------------------
 
 
 @pytest.mark.django_db
@@ -32,10 +50,14 @@ def test_bids():
     voting = Voting.objects.create(
         name="Test Voting",
         budget_goal=100,
-        voter_count=2,
         total_count=2,
         owner=owner,
     )
+    v1 = make_voter(1)
+    v2 = make_voter(2)
+    VotingVoter.objects.create(voting=voting, voter=v1, absent_from_round=1)
+    VotingVoter.objects.create(voting=voting, voter=v2, absent_from_round=1)
+
     Bid.objects.create(voting=voting, member_id=1, round_number=1, amount=1)
     Bid.objects.create(voting=voting, member_id=1, round_number=2, amount=2)
     Bid.objects.create(voting=voting, member_id=2, round_number=1, amount=1)
@@ -69,10 +91,10 @@ def test_bids():
 @pytest.mark.parametrize(
     "csv_string, expected_bid_count, expected_voter_count, raises_exception",
     [
-        ("1,1,2\n", 1, 3, False),
-        ("1;1;2\n2;1;2;3", 2, 4, False),
-        ("id;r1;r2;r3\n1;1;2\n2;1;2;3", 2, 4, False),
-        ("1,1\n2,1\n3,1", 3, 5, False),
+        ("1,1,2\n", 1, 1, False),
+        ("1;1;2\n2;1;2;3", 2, 2, False),
+        ("id;r1;r2;r3\n1;1;2\n2;1;2;3", 2, 2, False),
+        ("1,1\n2,1\n3,1", 3, 3, False),
         ("1,1\n1,1", 0, 0, IntegrityError),
     ],
 )
@@ -81,15 +103,85 @@ def test_bids_import_csv(csv_string, expected_bid_count, expected_voter_count, r
     voting = Voting.objects.create(
         name="Test Voting",
         budget_goal=100,
-        voter_count=2,
-        total_count=2,
+        total_count=10,
         owner=owner,
     )
 
     with pytest.raises(raises_exception) if raises_exception else nullcontext():
         voting.import_bids_csv(csv_string.splitlines())
-        assert voting.bid_count == expected_bid_count
+        assert voting.bids.values("member_id").distinct().count() == expected_bid_count
         assert voting.voter_count == expected_voter_count
+
+
+# ---------------------------------------------------------------------------
+# Absent voters without bids get average
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_absent_voter_without_bids_gets_average():
+    owner = User.objects.create_user("owner_avg")
+    voting = Voting.objects.create(
+        name="Test Voting",
+        budget_goal=Decimal("100"),
+        total_count=4,
+        owner=owner,
+    )
+    v1 = make_voter(101)
+    v2 = make_voter(102)
+    VotingVoter.objects.create(voting=voting, voter=v1)  # present
+    VotingVoter.objects.create(voting=voting, voter=v2, absent_from_round=1)  # absent, no bids
+
+    round1 = voting.new_round()
+
+    # Absent voter should get average_contribution_target = 100/4 = 25
+    assert round1.votes.filter(member_id=102).exists()
+    assert round1.votes.get(member_id=102).amount == Decimal("25")
+
+    # Round is not yet complete (present voter hasn't voted)
+    assert round1.is_complete is False
+
+    # Present voter votes
+    Vote.objects.create(voting_round=round1, member_id=101, amount=50)
+    assert round1.is_complete is True
+
+
+# ---------------------------------------------------------------------------
+# Voter leaves between rounds
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_voter_leaves_between_rounds():
+    owner = User.objects.create_user("owner_leave")
+    voting = Voting.objects.create(
+        name="Test Voting",
+        budget_goal=Decimal("100"),
+        total_count=2,
+        owner=owner,
+    )
+    v1 = make_voter(201)
+    v2 = make_voter(202)
+    vv1 = VotingVoter.objects.create(voting=voting, voter=v1)
+    VotingVoter.objects.create(voting=voting, voter=v2)
+
+    # Both present in round 1
+    round1 = voting.new_round()
+    Vote.objects.create(voting_round=round1, member_id=201, amount=50)
+    Vote.objects.create(voting_round=round1, member_id=202, amount=60)
+    assert round1.is_complete is True
+
+    # Voter 1 leaves before round 2
+    vv1.absent_from_round = 2
+    vv1.save()
+
+    round2 = voting.new_round()
+    # Voter 1 should get average (no bids) = 100/2 = 50
+    assert round2.votes.get(member_id=201).amount == Decimal("50")
+    # Voter 2 still needs to vote
+    assert round2.is_complete is False
+    Vote.objects.create(voting_round=round2, member_id=202, amount=55)
+    assert round2.is_complete is True
 
 
 # ---------------------------------------------------------------------------
@@ -106,15 +198,6 @@ def test_voting_clean_budget_goal_too_low():
     assert "budget_goal" in exc.value.message_dict
 
 
-@pytest.mark.django_db
-def test_voting_clean_voter_count_exceeds_total():
-    owner = User.objects.create_user("owner3")
-    voting = make_voting(owner, voter_count=5, total_count=3)
-    with pytest.raises(ValidationError) as exc:
-        voting.clean()
-    assert "voter_count" in exc.value.message_dict
-
-
 # ---------------------------------------------------------------------------
 # VotingRound.new_round() guard
 # ---------------------------------------------------------------------------
@@ -124,23 +207,36 @@ def test_voting_clean_voter_count_exceeds_total():
 def test_new_round_raises_when_previous_incomplete():
     owner = User.objects.create_user("owner4")
     voting = make_voting(owner, voter_count=2, total_count=2)
-    voting.new_round()  # round 1, no votes cast → incomplete
+    voting.new_round()  # round 1, no votes cast -> incomplete
     with pytest.raises(ValueError, match="not complete"):
         voting.new_round()
 
 
+@pytest.mark.django_db
+def test_new_round_raises_when_no_voters():
+    owner = User.objects.create_user("owner_no_voters")
+    voting = Voting.objects.create(
+        name="Test Voting",
+        budget_goal=100,
+        total_count=2,
+        owner=owner,
+    )
+    with pytest.raises(ValueError, match="Keine Teilnehmer"):
+        voting.new_round()
+
+
 # ---------------------------------------------------------------------------
-# VotingRound.apply_bids() double-apply guard
+# VotingRound.apply_absent_votes() double-apply guard
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.django_db
-def test_apply_bids_raises_when_already_applied():
+def test_apply_absent_votes_raises_when_already_applied():
     owner = User.objects.create_user("owner5")
     voting = make_voting(owner)
     round = voting.new_round()
     with pytest.raises(ValueError, match="already applied"):
-        round.apply_bids()
+        round.apply_absent_votes()
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +268,19 @@ def test_budget_result(vote_amounts, budget_goal, total_count, expected_success)
     assert result["success"] is expected_success
     assert result["vote_sum"] == sum(vote_amounts)
     assert result["difference"] == result["result"] - budget_goal
+
+
+# ---------------------------------------------------------------------------
+# HMAC auth tokens
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_hmac_token_compute_and_verify():
+    token = compute_member_token(42)
+    assert verify_member_token(42, token) is True
+    assert verify_member_token(43, token) is False
+    assert verify_member_token(42, "wrong") is False
 
 
 # ---------------------------------------------------------------------------
@@ -214,7 +323,7 @@ def test_voting_create_post_valid(client, owner):
     client.force_login(owner)
     response = client.post(
         reverse("voting:create"),
-        {"name": "Neue Runde", "budget_goal": "500", "voter_count": "3", "total_count": "5"},
+        {"name": "Neue Runde", "budget_goal": "500", "total_count": "5"},
     )
     assert response.status_code == 302
     assert Voting.objects.filter(name="Neue Runde", owner=owner).exists()
@@ -225,7 +334,7 @@ def test_voting_create_post_invalid(client, owner):
     client.force_login(owner)
     response = client.post(
         reverse("voting:create"),
-        {"name": "Test", "budget_goal": "0", "voter_count": "5", "total_count": "3"},
+        {"name": "Test", "budget_goal": "0", "total_count": "3"},
     )
     assert response.status_code == 200  # re-renders form
 
@@ -306,7 +415,7 @@ def test_voting_import_bids_non_htmx_redirects(client, owner, voting):
 @pytest.mark.django_db
 def test_voting_import_bids_htmx_post_valid(client, owner, voting):
     client.force_login(owner)
-    csv_content = b"1,10,20\n2,15,25\n"
+    csv_content = b"10,10,20\n20,15,25\n"
     response = client.post(
         reverse("voting:import-bids", args=[voting.id]),
         {"bids": io.BytesIO(csv_content)},
@@ -315,3 +424,66 @@ def test_voting_import_bids_htmx_post_valid(client, owner, voting):
     assert response.status_code == 200
     assert response["HX-Refresh"] == "true"
     assert voting.bids.count() == 4
+
+
+# ---------------------------------------------------------------------------
+# Voter registration view tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_voter_registration_invalid_token(client, voting):
+    voter = make_voter(300)
+    response = client.get(
+        reverse(
+            "voting:voter-registration",
+            kwargs={"voting_id": voting.id, "member_id": 300, "auth_token": "bad"},
+        )
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_voter_registration_get(client, voting):
+    voter = make_voter(301)
+    token = compute_member_token(301)
+    response = client.get(
+        reverse(
+            "voting:voter-registration",
+            kwargs={"voting_id": voting.id, "member_id": 301, "auth_token": token},
+        )
+    )
+    assert response.status_code == 200
+    # Voter should now be linked to the voting
+    assert VotingVoter.objects.filter(voting=voting, voter=voter).exists()
+
+
+@pytest.mark.django_db
+def test_voter_registration_post_attending(client, voting):
+    voter = make_voter(302)
+    token = compute_member_token(302)
+    url = reverse(
+        "voting:voter-registration",
+        kwargs={"voting_id": voting.id, "member_id": 302, "auth_token": token},
+    )
+    response = client.post(url, {"attending": "on", "bid_round_1": "50", "bid_round_2": "60"})
+    assert response.status_code == 302
+    vv = VotingVoter.objects.get(voting=voting, voter=voter)
+    assert vv.absent_from_round is None  # attending
+    assert voting.bids.filter(member_id=302, round_number=1).first().amount == Decimal("50")
+    assert voting.bids.filter(member_id=302, round_number=2).first().amount == Decimal("60")
+
+
+@pytest.mark.django_db
+def test_voter_registration_post_not_attending(client, voting):
+    voter = make_voter(303)
+    token = compute_member_token(303)
+    url = reverse(
+        "voting:voter-registration",
+        kwargs={"voting_id": voting.id, "member_id": 303, "auth_token": token},
+    )
+    response = client.post(url, {"bid_round_1": "45"})
+    assert response.status_code == 302
+    vv = VotingVoter.objects.get(voting=voting, voter=voter)
+    assert vv.absent_from_round == 1  # not attending
+    assert voting.bids.filter(member_id=303, round_number=1).first().amount == Decimal("45")
