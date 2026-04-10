@@ -5,16 +5,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('voting', '0005_voter_alter_bid_options_remove_voting_voter_count_and_more'),
+        ("voting", "0005_voter_alter_bid_options_remove_voting_voter_count_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='voting',
-            name='date',
-            field=models.DateField(default=django.utils.timezone.now, verbose_name='Datum'),
+            model_name="voting",
+            name="date",
+            field=models.DateField(default=django.utils.timezone.now, verbose_name="Datum"),
             preserve_default=False,
         ),
     ]

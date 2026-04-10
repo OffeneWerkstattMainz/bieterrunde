@@ -217,7 +217,9 @@ def voter_registration(request, voting_id, member_id, auth_token):
         existing_bids = dict(
             voting.bids.filter(member_id=member_id).values_list("round_number", "amount")
         )
-        initial = {"attending": voting_voter.absent_from_round is None if not vv_created else False}
+        initial = {
+            "attending": voting_voter.absent_from_round is None if not vv_created else False
+        }
         for round_number, amount in existing_bids.items():
             initial[f"bid_round_{round_number}"] = amount
         form = VoterRegistrationForm(initial=initial)

@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.urls import reverse
 
-from voting.models import Bid, Vote, Voter, Voting, VotingRound, VotingVoter
+from voting.models import Bid, Vote, Voter, Voting, VotingVoter
 from voting.utils.hmac_auth import compute_member_token, verify_member_token
 
 
@@ -374,7 +374,7 @@ def test_voting_new_round_incomplete_shows_error(client, owner, voting):
 
 @pytest.mark.django_db
 def test_voting_vote_get(client, owner, voting):
-    round = voting.new_round()
+    voting.new_round()
     response = client.get(reverse("voting:vote", args=[voting.id]))
     assert response.status_code == 200
 
@@ -440,7 +440,7 @@ def test_voting_import_bids_htmx_post_valid(client, owner, voting):
 
 @pytest.mark.django_db
 def test_voter_registration_invalid_token(client, voting):
-    voter = make_voter(300)
+    make_voter(300)
     response = client.get(
         reverse(
             "voting:voter-registration",

@@ -2,6 +2,10 @@
 description = "Run a local dev server"
 run = "uv run python manage.py runserver 0.0.0.0:8080"
 
+[tasks.run-tests]
+description = "Run tests"
+run = "uv run pytest"
+
 [tasks.build-docker]
 description = "Build the docker image"
 run = "docker build -f docker/Dockerfile -t bieterrunde ."
@@ -13,3 +17,8 @@ run = "uv run python manage.py shell"
 [tasks.djm]
 description = "Run a django manage.py command"
 run = "uv run python manage.py {{arg(name='commmands', var=true)}}"
+
+[tools]
+prek = "0.3.8"
+python = "3.12"
+uv = "0.11.6"

@@ -17,7 +17,9 @@ class InvalidFormMixin:
         res = super().is_valid()
         if not res:
             for field in self.errors:
-                self.fields[field].widget.attrs.update({"aria-invalid": "true", "aria-describedby": f"{field}_invalid"})
+                self.fields[field].widget.attrs.update(
+                    {"aria-invalid": "true", "aria-describedby": f"{field}_invalid"}
+                )
         return res
 
 
@@ -45,7 +47,11 @@ class BidImportForm(InvalidFormMixin, Form):
 
 
 class VoterRegistrationForm(InvalidFormMixin, Form):
-    attending = BooleanField(label="Ich werde teilnehmen", required=False, widget=CheckboxInput(attrs={"role":"switch"}))
+    attending = BooleanField(
+        label="Ich werde teilnehmen",
+        required=False,
+        widget=CheckboxInput(attrs={"role": "switch"}),
+    )
     bid_round_1 = DecimalField(
         label="Gebot Runde 1 (€)", required=False, max_digits=10, decimal_places=2, localize=True
     )

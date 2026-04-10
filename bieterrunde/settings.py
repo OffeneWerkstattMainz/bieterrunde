@@ -149,7 +149,11 @@ def _get_version():
     from subprocess import check_output, CalledProcessError
 
     try:
-        return check_output(["git", "describe", "--always", "--tags", "--dirty"]).decode("utf-8").strip()
+        return (
+            check_output(["git", "describe", "--always", "--tags", "--dirty"])
+            .decode("utf-8")
+            .strip()
+        )
     except (CalledProcessError, FileNotFoundError):
         pass
 

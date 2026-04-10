@@ -1,9 +1,8 @@
 from functools import partial
 
 import djclick
-from djclick.params import ModelInstance
 
-from voting.models import Voter, Voting
+from voting.models import Voter
 from voting.utils.hmac_auth import compute_member_token
 from voting.utils.webling_api import WeblingAPI
 

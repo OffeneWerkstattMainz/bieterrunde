@@ -9,10 +9,11 @@ Bieterrunde is a Django 5 app for running solidarity-based membership fee biddin
 ## Commands
 
 ```bash
+mise install                   # Install system deps
 uv sync                        # install deps
 uv run pytest                  # run tests
 uv run python manage.py <cmd>  # Django management commands
-uv run ruff format .           # format code
+prek run                       # run all pre-commit checks (ruff lint+format, trailing whitespace, etc.)
 ```
 
 ## Code style
