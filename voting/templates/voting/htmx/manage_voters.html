@@ -46,14 +46,10 @@
                href="{% url "voting:voter-add" voting_id=voting.id %}"
                hx-target="closest dialog"
                hx-swap="outerHTML">Teilnehmer hinzufügen</a>
-            <form hx-post="{% url "voting:voter-quick-add" voting_id=voting.id %}" hx-target="closest dialog" hx-swap="outerHTML" style="margin-bottom:0">
-                {% csrf_token %}
-                <fieldset role="group">
-                    {{ quick_form.member_ids }}
-                    <button type="submit">Hinzufügen</button>
-                </fieldset>
-                {{ quick_form.member_ids.errors }}
-            </form>
+            <a role="button" class="secondary"
+               href="{% url "voting:voter-quick-add" voting_id=voting.id %}"
+               hx-target="closest dialog"
+               hx-swap="outerHTML">Mehrere Teilnehmer hinzufügen</a>
         </div>
     </article>
     {% endif %}

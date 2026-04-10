@@ -211,12 +211,7 @@ def voting_voters(request, voting_id):
     return render(
         request,
         "voting/htmx/manage_voters.html",
-        dict(
-            voting=voting,
-            voting_voters=voter_list,
-            quick_form=VotingVoterQuickAddForm(voting=voting),
-            open=True,
-        ),
+        dict(voting=voting, voting_voters=voter_list, open=True),
     )
 
 
@@ -264,33 +259,21 @@ def voting_voter_quick_add(request, voting_id):
     if request.method == "POST":
         quick_form = VotingVoterQuickAddForm(request.POST, voting=voting)
         if not quick_form.is_valid():
-            voting_voters = (
-                VotingVoter.objects.filter(voting=voting)
-                .select_related("voter")
-                .order_by("voter__member_id")
-            )
-            voter_list = []
-            for vv in voting_voters:
-                vv.bid_count = Bid.objects.filter(
-                    voting=voting, member_id=vv.voter.member_id
-                ).count()
-                voter_list.append(vv)
             return render(
                 request,
-                "voting/htmx/manage_voters.html",
-                dict(
-                    voting=voting,
-                    voting_voters=voter_list,
-                    quick_form=quick_form,
-                    open=True,
-                ),
+                "voting/htmx/manage_voter_quick_add.html",
+                dict(quick_form=quick_form, open=True, voting=voting),
             )
         member_ids = quick_form.cleaned_data["member_ids"]
         voters = Voter.objects.filter(member_id__in=member_ids)
         for voter in voters:
             VotingVoter.objects.create(voting=voting, voter=voter)
         return HttpResponseClientRefresh()
-    return redirect("voting:voter-add", voting_id=voting_id)
+    return render(
+        request,
+        "voting/htmx/manage_voter_quick_add.html",
+        dict(quick_form=VotingVoterQuickAddForm(voting=voting), voting=voting, open=True),
+    )
 
 
 @allow_guest_user()
