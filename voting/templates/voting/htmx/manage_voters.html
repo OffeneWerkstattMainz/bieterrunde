@@ -1,0 +1,56 @@
+<dialog {% if open %}open{% endif %}>
+    {% if voting_voters is not None %}
+    <article>
+        <header>
+            Teilnehmer verwalten
+            <button aria-label="close" rel="prev" hx-on:click="htmx.find('dialog').close();"></button>
+        </header>
+        {% if voting_voters %}
+        <input type="search" id="voter-filter" placeholder="Filter..." oninput="
+            var q = this.value.toLowerCase();
+            document.querySelectorAll('#voter-table tbody tr').forEach(function(row) {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        ">
+        <table id="voter-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Gebote</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vv in voting_voters %}
+                <tr>
+                    <td>{{ vv.voter.member_id }}</td>
+                    <td>{{ vv.voter.name }}</td>
+                    <td>{% if vv.absent_from_round %}👋{% if vv.absent_from_round > 1 %} ab {{ vv.absent_from_round }}{% endif %}{% else %}🧑‍💻{% endif %}</td>
+                    <td>{{ vv.bid_count }}</td>
+                    <td hx-boost="true">
+                        <a href="{% url "voting:voter-edit" voting_id=voting.id voting_voter_id=vv.id %}"
+                           hx-target="closest dialog"
+                           hx-swap="outerHTML">Bearbeiten</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Keine Teilnehmer vorhanden.</p>
+        {% endif %}
+        <div role="group" hx-boost="true">
+            <a role="button" class="pico-background-green"
+               href="{% url "voting:voter-add" voting_id=voting.id %}"
+               hx-target="closest dialog"
+               hx-swap="outerHTML">Teilnehmer hinzufügen</a>
+            <a role="button" class="secondary"
+               href="{% url "voting:voter-quick-add" voting_id=voting.id %}"
+               hx-target="closest dialog"
+               hx-swap="outerHTML">Mehrere Teilnehmer hinzufügen</a>
+        </div>
+    </article>
+    {% endif %}
+</dialog>

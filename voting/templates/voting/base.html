@@ -25,6 +25,11 @@
                 display: none;
             }
         }
+        @media (min-width:1024px) {
+            dialog article {
+                max-width: 950px;
+            }
+        }
         :where(input,select,textarea,fieldset,.grid)[aria-invalid=true]+small {
             /* Fix error message disappearing under input field */
             padding-top: 1rem;
