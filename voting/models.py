@@ -106,6 +106,10 @@ class Voting(models.Model):
     def has_voters(self) -> bool:
         return self.voters.exists()
 
+    @property
+    def rounds_started(self) -> bool:
+        return self.rounds.exists()
+
     def new_round(self) -> "VotingRound":
         if self.voter_count == 0:
             raise ValueError("Keine Teilnehmer vorhanden")
@@ -126,6 +130,10 @@ class Voting(models.Model):
 
     @atomic
     def import_bids_csv(self, csv_lines: list[str]):
+        if self.rounds_started:
+            raise ValueError(
+                "Gebote können nicht importiert werden, nachdem die erste Runde begonnen hat."
+            )
         for row in csv.reader(csv_lines, delimiter=";" if ";" in csv_lines[0] else ","):
             if not row or not row[0].isdigit():
                 # Skip empty lines, headers and/or comments
@@ -165,6 +173,12 @@ class VotingVoter(models.Model):
 
     def __str__(self):
         return f"{self.voter} @ {self.voting}"
+
+    def clean(self):
+        if self._state.adding and self.voting_id and self.voting.rounds_started:
+            raise ValidationError(
+                "Teilnehmer können nicht hinzugefügt werden, nachdem die erste Runde begonnen hat."
+            )
 
     def is_absent_for_round(self, round_number: int) -> bool:
         return self.absent_from_round is not None and self.absent_from_round <= round_number

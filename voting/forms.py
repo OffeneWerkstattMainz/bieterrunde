@@ -101,6 +101,10 @@ class VotingVoterAddForm(InvalidFormMixin, Form):
             and VotingVoter.objects.filter(voting=self.voting, voter__member_id=member_id).exists()
         ):
             raise ValidationError("Dieses Mitglied nimmt bereits an dieser Bieterrunde teil.")
+        if self.voting and self.voting.rounds_started:
+            raise ValidationError(
+                "Teilnehmer können nicht hinzugefügt werden, nachdem die erste Runde begonnen hat."
+            )
         return member_id
 
     def get_bids(self):
@@ -155,6 +159,11 @@ class VotingVoterQuickAddForm(InvalidFormMixin, Form):
             if already:
                 raise ValidationError(
                     f"Bereits teilnehmend: {', '.join(str(m) for m in sorted(already))}"
+                )
+            if self.voting.rounds_started:
+                raise ValidationError(
+                    "Teilnehmer können nicht hinzugefügt werden, "
+                    "nachdem die erste Runde begonnen hat."
                 )
         return member_ids
 

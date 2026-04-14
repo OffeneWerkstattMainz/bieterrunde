@@ -337,7 +337,14 @@ def voter_registration(request, voting_id, member_id, auth_token):
 
     voting = get_object_or_404(Voting, pk=voting_id)
     voter = get_object_or_404(Voter, member_id=member_id)
-    voting_voter, vv_created = VotingVoter.objects.get_or_create(voting=voting, voter=voter)
+    voting_voter = VotingVoter.objects.filter(voting=voting, voter=voter).first()
+    vv_missing = voting_voter is None
+    if vv_missing:
+        if voting.rounds_started:
+            return HttpResponseForbidden(
+                "Registrierung ist nicht mehr möglich, da die erste Runde bereits begonnen hat."
+            )
+        voting_voter = VotingVoter.objects.create(voting=voting, voter=voter)
 
     if request.method == "POST":
         form = VoterRegistrationForm(request.POST)
@@ -366,7 +373,7 @@ def voter_registration(request, voting_id, member_id, auth_token):
             voting.bids.filter(member_id=member_id).values_list("round_number", "amount")
         )
         initial = {
-            "attending": voting_voter.absent_from_round is None if not vv_created else False
+            "attending": voting_voter.absent_from_round is None if not vv_missing else False
         }
         for round_number, amount in existing_bids.items():
             initial[f"bid_round_{round_number}"] = amount
