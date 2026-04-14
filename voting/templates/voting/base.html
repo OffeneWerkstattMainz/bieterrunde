@@ -25,6 +25,11 @@
                 display: none;
             }
         }
+        @media (min-width:1024px) {
+            dialog article {
+                max-width: 950px;
+            }
+        }
         :where(input,select,textarea,fieldset,.grid)[aria-invalid=true]+small {
             /* Fix error message disappearing under input field */
             padding-top: 1rem;
@@ -87,7 +92,9 @@
     </style>
     <script src="{% static 'htmx.min.js' %}" defer></script>
     <script src="{% static 'htmx-remove-me.js' %}" defer></script>
-    {% if debug %}<script>
+    <script>
+        document.addEventListener('keyup', ev => {if (ev.key == "Escape") {htmx.find('dialog').close();}})
+        {% if debug %}
         window.onload = function () {
             htmx.logger = function (elt, event, data) {
                 if (console) {
@@ -96,7 +103,8 @@
             };
             htmx.logAll();
         };
-    </script>{% endif %}
+        {% endif %}
+    </script>
     <title>{% block page-title %}{% endblock %}Bieterrunde</title>
     {% block head %}
 
