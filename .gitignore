@@ -4,3 +4,4 @@ db.sqlite3
 .env
 docker-compose.override.yaml
 data/
+mise.local.toml

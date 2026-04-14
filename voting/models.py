@@ -11,6 +11,7 @@ from django.db import models
 from django.db.models import Sum
 from django.db.transaction import atomic
 
+
 log = getLogger(__name__)
 
 
@@ -179,6 +180,18 @@ class VotingVoter(models.Model):
             raise ValidationError(
                 "Teilnehmer können nicht hinzugefügt werden, nachdem die erste Runde begonnen hat."
             )
+
+    def save(self, *args, force_insert=False, force_update=False, using=None, update_fields=None):
+        super().save(
+            *args,
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
+        from voting.tasks import update_member_assembly_participation
+
+        update_member_assembly_participation.enqueue(self.id)
 
     def is_absent_for_round(self, round_number: int) -> bool:
         return self.absent_from_round is not None and self.absent_from_round <= round_number

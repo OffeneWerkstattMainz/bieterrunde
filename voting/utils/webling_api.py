@@ -41,15 +41,24 @@ class WeblingAPI:
             for group in response.json()
         }
 
-    def fetch_members(self, parent_group: int) -> dict[int, dict]:
+    def fetch_members_by_filter(
+        self, filter: str, full: bool = True
+    ) -> dict[int, dict] | list[int]:
         response = self.client.get(
             f"{API_BASE}/member",
             headers={"apikey": self.api_key},
-            params={"format": "full", "filter": f"$parents.$id={parent_group}"},
+            params={"format": "full" if full else "", "filter": filter},
         )
         response.raise_for_status()
+        if full:
+            return {member["id"]: member for member in response.json()}
+        else:
+            return response.json().get("objects", [])
 
-        return {member["id"]: member for member in response.json()}
+    def fetch_members_by_group_id(self, parent_group: int) -> dict[int, dict]:
+        result = self.fetch_members_by_filter(f"$parents.$id={parent_group}")
+        assert isinstance(result, dict)  # make typecheck happy
+        return result
 
     def update_member_contribution(self, member_id: int, contribution: int):
         response = self.client.put(
@@ -59,11 +68,32 @@ class WeblingAPI:
         )
         response.raise_for_status()
 
-    def update_member_auth_token(self, member_id: int, token: str):
+    def get_member_id_by_mitglieder_id(self, mitglieder_id: int) -> int:
+        ids = self.fetch_members_by_filter(f"`Mitglieder ID` = {mitglieder_id}", full=False)
+        if len(ids) != 1:
+            raise ValueError(f"Mitglieder ID {mitglieder_id} does not exist")
+        assert isinstance(ids, list)  # make typecheck happy
+        return ids[0]
+
+    def update_member_auth_token(self, member_id: int, token: str) -> None:
         response = self.client.put(
             f"{API_BASE}/member/{member_id}",
             headers={"apikey": self.api_key},
             json={"properties": {"Bieterrunden-Auth-Token": token}},
+        )
+        response.raise_for_status()
+
+    def update_member_assembly_participation(
+        self, member_id: int, participation: bool | None
+    ) -> None:
+        response = self.client.put(
+            f"{API_BASE}/member/{member_id}",
+            headers={"apikey": self.api_key},
+            json={
+                "properties": {
+                    "MV Teilnahme": {None: "", True: "Ja", False: "Nein"}.get(participation)
+                }
+            },
         )
         response.raise_for_status()
 

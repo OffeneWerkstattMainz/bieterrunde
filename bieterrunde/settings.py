@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django_htmx",
     "voting",
     "django.forms",
+    "django_tasks",
 ]
 
 MIDDLEWARE = [
@@ -136,11 +137,16 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
     },
-    "root": {
-        "level": "DEBUG",
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name}: {message}",
+            "style": "{",
+        },
     },
+    "loggers": {},
 }
 
 
@@ -165,3 +171,5 @@ def _get_version():
 PROJECT_VERSION = _get_version()
 
 CREATE_VOTING_ACCESS_CODE = os.environ.get("CREATE_VOTING_ACCESS_CODE")
+
+WEBLING_API_KEY = os.environ.get("WEBLING_API_KEY")

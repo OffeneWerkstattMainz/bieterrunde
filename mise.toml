@@ -22,3 +22,6 @@ run = "uv run python manage.py {{arg(name='commmands', var=true)}}"
 prek = "0.3.8"
 python = "3.12"
 uv = "0.11.6"
+
+[env]
+DJANGO_SETTINGS_MODULE = "bieterrunde.settings_dev"

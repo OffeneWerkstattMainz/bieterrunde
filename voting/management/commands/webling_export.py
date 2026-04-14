@@ -58,7 +58,7 @@ def command(
             djclick.secho("Invalid member group ID", fg="red")
             return
 
-        group_members = api.fetch_members(group_id)
+        group_members = api.fetch_members_by_group_id(group_id)
 
         # The internal and "public" member IDs are different
         group_member_member_ids = set(

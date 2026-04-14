@@ -7,7 +7,7 @@
                     {% if not entry.has_voted %}
                         <header class="pico-background-grey"># {{ entry.voter.member_id }}</header>
                         {% if entry.voter.name %}<small>{{ entry.voter.name }}</small>{% endif %}
-                        <p><i>Noch nicht abgestimmt</i></p>
+                        <p><i>⏳</i></p>
                     {% else %}
                         <header class="{% if entry.vote.amount < voting_round.voting.average_contribution_target %}pico-background-yellow{% else %}pico-background-green{% endif %}"># {{ entry.voter.member_id }}</header>
                         {% if entry.voter.name %}<small>{{ entry.voter.name }}</small>{% endif %}

@@ -1,7 +1,10 @@
+import sys
 from functools import partial
 
 import djclick
+from django.core.management import CommandError
 
+from django.conf import settings
 from voting.models import Voter
 from voting.utils.hmac_auth import compute_member_token
 from voting.utils.webling_api import WeblingAPI
@@ -14,19 +17,43 @@ _Y = partial(djclick.style, fg="yellow")
 
 
 @djclick.command()
-@djclick.option("--api-key", required=True, help="API key for Webling", envvar="WEBLING_API_KEY")
 @djclick.option(
-    "--webling-group-id", type=int, help="Webling group ID to import from, if missing prompt user"
+    "--api-key",
+    required=True,
+    help="Webling API, by default will be tried to be loaded from settings.",
+    envvar="WEBLING_API_KEY",
+)
+@djclick.option(
+    "--webling-group-id",
+    type=int,
+    help="Webling group ID to import from, if missing prompt user (unless --webling-filter is specified)",
+)
+@djclick.option(
+    "--webling-filter",
+    type=str,
+    help="Webling user filter expression, used instead of --webling-group-id",
 )
 @djclick.option("-n", "--dry-run", is_flag=True, help="Do not actually write anything")
-def command(api_key: str, webling_group_id: int | None, dry_run: bool):
+def command(
+    api_key: str | None, webling_group_id: int | None, webling_filter: str | None, dry_run: bool
+):
     """Import Voter objects from Webling and write HMAC auth tokens back."""
+    if webling_group_id and webling_filter:
+        raise CommandError(
+            "The options '--webling-group-id' and '--webling-filter' are mutually exclusive."
+        )
     if dry_run:
         djclick.secho("DRY RUN - NO DATA WILL BE CHANGED", fg="red")
 
+    if not api_key:
+        api_key = settings.WEBLING_API_KEY
+
+    if not api_key:
+        raise CommandError("Webling API key is required (either via settings or CLI parameter)")
+
     api = WeblingAPI(api_key)
     with api:
-        if not webling_group_id:
+        if not webling_group_id and not webling_filter:
             membergroups = api.fetch_membergroups()
             djclick.secho("Member groups found:", fg="green")
             for group_id, group in membergroups.items():
@@ -34,8 +61,14 @@ def command(api_key: str, webling_group_id: int | None, dry_run: bool):
                     f"  - {_Y(group_id)}: {_G(group.title)} ({_B(len(group.members))} members)"
                 )
             webling_group_id = djclick.prompt("Select the member group to import from", type=int)
+            members = api.fetch_members_by_group_id(webling_group_id)
+        elif webling_filter:
+            members = api.fetch_members_by_filter(webling_filter)
 
-        members = api.fetch_members(webling_group_id)
+        if not members:
+            djclick.secho("No members found", fg="red")
+            sys.exit(1)
+
         djclick.echo(f"{_G('Importing')} {_B(len(members))} {_G('members...')}")
 
         created = 0

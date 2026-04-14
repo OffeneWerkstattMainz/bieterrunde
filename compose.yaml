@@ -1,22 +1,41 @@
 services:
   web:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: ${BIETERRUNDE_IMAGE:-ghcr.io/OffeneWerkstattMainz/bieterrunde:v0.9.0b1}
     restart: unless-stopped
     environment:
       ALLOWED_HOSTS: "${DOMAIN}"
       DB_HOST: db
+      RQ_HOST: valkey
       SECRET_KEY_FILE: "/data/secret_key.txt"
       STATIC_ROOT: "/data/static"
+      CREATE_VOTING_ACCESS_CODE:
+      WEB_CONCURRENCY:
     volumes:
       - ${DATA_DIR:-./data}/web:/data
       - web-static:/data/static
     depends_on:
       - db
+      - valkey
     labels:
       caddy: "${DOMAIN}"
       caddy.reverse_proxy: "{{ upstreams 8000 }}"
+
+  worker:
+    image: ${BIETERRUNDE_IMAGE:-ghcr.io/OffeneWerkstattMainz/bieterrunde:v0.9.0b1}
+    restart: unless-stopped
+    scale: 2
+    environment:
+      DB_HOST: db
+      RQ_HOST: valkey
+      SECRET_KEY_FILE: "/data/secret_key.txt"
+      WORKER_CONCURRENCY:
+    volumes:
+      - ${DATA_DIR:-./data}/web:/data
+      - web-static:/data/static
+    depends_on:
+      - db
+      - valkey
+    command: "uv run manage.py rqworker --job-class django_tasks_rq.Job"
 
   db:
     image: postgres:16
@@ -30,6 +49,9 @@ services:
       test: pg_isready -U postgres
       start_period: "30s"
       start_interval: "2s"
+
+  valkey:
+    image: valkey/valkey:7.2
 
   caddy:
     image: lucaslorentz/caddy-docker-proxy:latest

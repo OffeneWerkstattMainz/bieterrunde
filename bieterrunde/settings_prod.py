@@ -22,6 +22,15 @@ MIDDLEWARE.insert(
     "whitenoise.middleware.WhiteNoiseMiddleware",
 )
 
+INSTALLED_APPS += [
+    "django_rq",
+    "django_tasks_rq",
+]
+
+LOGGING["loggers"][""] = {
+    "level": "INFO",
+    "handlers": ["console"],
+}
 
 SECRET_KEY_FILE = Path(os.environ["SECRET_KEY_FILE"])
 if not SECRET_KEY_FILE.exists():
@@ -40,3 +49,20 @@ STORAGES = {
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+
+TASKS = {
+    "default": {
+        "BACKEND": "django_tasks_rq.RQBackend",
+        "QUEUES": ["default"],
+    },
+}
+
+RQ_QUEUES = {
+    "default": {
+        "HOST": os.environ.get("RQ_HOST"),
+        "PORT": 6379,
+        "DB": 0,
+        "DEFAULT_TIMEOUT": 360,
+        "DEFAULT_RESULT_TTL": 800,
+    },
+}
