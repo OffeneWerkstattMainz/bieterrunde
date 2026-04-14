@@ -640,3 +640,102 @@ def test_voter_management_owner_only(client, voting):
     )
     assert response.status_code == 302
     assert response["Location"] == reverse("voting:index")
+
+
+# ---------------------------------------------------------------------------
+# Restrict voter additions once the first round has started
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_voting_rounds_started_property(voting):
+    assert voting.rounds_started is False
+    voting.new_round()
+    assert voting.rounds_started is True
+
+
+@pytest.mark.django_db
+def test_voter_add_blocked_after_round_started(client, owner, voting):
+    client.force_login(owner)
+    voting.new_round()
+    make_voter(999, "Too Late")
+    response = client.post(
+        reverse("voting:voter-add", args=[voting.id]),
+        {"member_id": "999"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    assert "erste Runde" in response.content.decode()
+    assert not VotingVoter.objects.filter(voting=voting, voter__member_id=999).exists()
+
+
+@pytest.mark.django_db
+def test_voter_quick_add_blocked_after_round_started(client, owner, voting):
+    client.force_login(owner)
+    voting.new_round()
+    make_voter(801, "Too Late A")
+    make_voter(802, "Too Late B")
+    response = client.post(
+        reverse("voting:voter-quick-add", args=[voting.id]),
+        {"member_ids": "801, 802"},
+        HTTP_HX_REQUEST="true",
+    )
+    assert response.status_code == 200
+    assert "erste Runde" in response.content.decode()
+    assert not VotingVoter.objects.filter(voting=voting, voter__member_id=801).exists()
+    assert not VotingVoter.objects.filter(voting=voting, voter__member_id=802).exists()
+
+
+@pytest.mark.django_db
+def test_voter_registration_blocked_after_round_started(client, voting):
+    voter = make_voter(310)
+    voting.new_round()
+    token = compute_member_token(310)
+    response = client.get(
+        reverse(
+            "voting:voter-registration",
+            kwargs={"voting_id": voting.id, "member_id": 310, "auth_token": token},
+        )
+    )
+    assert response.status_code == 403
+    assert not VotingVoter.objects.filter(voting=voting, voter=voter).exists()
+
+
+@pytest.mark.django_db
+def test_voter_registration_still_works_for_existing_voter(client, voting):
+    # Voter with member_id=1 is already part of the fixture voting
+    voter = Voter.objects.get(member_id=1)
+    token = compute_member_token(1)
+    voting.new_round()
+    url = reverse(
+        "voting:voter-registration",
+        kwargs={"voting_id": voting.id, "member_id": 1, "auth_token": token},
+    )
+    response = client.post(url, {"attending": "on", "bid_round_1": "42"})
+    assert response.status_code == 302
+    vv = VotingVoter.objects.get(voting=voting, voter=voter)
+    assert vv.absent_from_round is None
+    assert voting.bids.filter(member_id=1, round_number=1).first().amount == Decimal("42")
+
+
+@pytest.mark.django_db
+def test_import_bids_csv_blocked_after_round_started(voting):
+    voting.new_round()
+    with pytest.raises(ValueError, match="erste Runde"):
+        voting.import_bids_csv(["500,1,2"])
+
+
+@pytest.mark.django_db
+def test_voting_voter_model_clean_blocks_after_round_started(voting):
+    voting.new_round()
+    new_voter = make_voter(700, "Late Joiner")
+    vv = VotingVoter(voting=voting, voter=new_voter)
+    with pytest.raises(ValidationError):
+        vv.full_clean()
+
+
+@pytest.mark.django_db
+def test_voting_voter_model_clean_allows_before_round_started(voting):
+    new_voter = make_voter(701, "Early Bird")
+    vv = VotingVoter(voting=voting, voter=new_voter)
+    vv.full_clean()  # must not raise

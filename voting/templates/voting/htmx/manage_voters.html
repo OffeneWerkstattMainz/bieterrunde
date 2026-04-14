@@ -41,6 +41,7 @@
         {% else %}
         <p>Keine Teilnehmer vorhanden.</p>
         {% endif %}
+        {% if not voting.rounds_started %}
         <div role="group" hx-boost="true">
             <a role="button" class="pico-background-green"
                href="{% url "voting:voter-add" voting_id=voting.id %}"
@@ -51,6 +52,9 @@
                hx-target="closest dialog"
                hx-swap="outerHTML">Mehrere Teilnehmer hinzufügen</a>
         </div>
+        {% else %}
+        <p><small>Keine weiteren Teilnehmer können hinzugefügt werden, da die erste Runde bereits begonnen hat.</small></p>
+        {% endif %}
     </article>
     {% endif %}
 </dialog>
