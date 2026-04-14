@@ -17,7 +17,7 @@ Da dieser Prozess sehr Zeitaufwendig ist, entstand die Idee ein Tool zu entwicke
 
 TBD
 
-# Dev Setup
+## Dev Setup
 
 Das Projekt nutzt [mise](https://mise.jdx.dev) als dependency manager.
 Ein development setup kann mit den folgenden Befehlen aufgesetzt werden:
