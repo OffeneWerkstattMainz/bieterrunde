@@ -1,6 +1,6 @@
 services:
   web:
-    image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:v0.9.0b3}
+    image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:0.9.0b3}
     restart: unless-stopped
     environment:
       ALLOWED_HOSTS: "${DOMAIN}"
@@ -21,7 +21,7 @@ services:
       caddy.reverse_proxy: "{{ upstreams 8000 }}"
 
   worker:
-    image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:v0.9.0b3}
+    image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:0.9.0b3}
     restart: unless-stopped
     scale: 2
     environment:
@@ -35,7 +35,7 @@ services:
     depends_on:
       - db
       - valkey
-    command: "uv run manage.py rqworker --job-class django_tasks_rq.Job"
+    entrypoint: "uv run --group prod --no-group dev manage.py rqworker --job-class django_tasks_rq.Job"
 
   db:
     image: postgres:16

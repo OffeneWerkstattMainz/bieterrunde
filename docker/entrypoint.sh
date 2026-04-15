@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-uv run python manage.py migrate
-uv run python manage.py collectstatic --noinput
+uv run --group prod --no-group dev python manage.py migrate
+uv run --group prod --no-group dev python manage.py collectstatic --noinput
 
-uv run gunicorn "$@"
+uv run --group prod --no-group dev gunicorn "$@"
