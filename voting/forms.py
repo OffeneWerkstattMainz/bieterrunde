@@ -65,6 +65,17 @@ class VoterRegistrationForm(InvalidFormMixin, Form):
         label="Gebot Runde 3 (€)", required=False, max_digits=10, decimal_places=2, localize=True
     )
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        attending = cleaned_data.get("attending")
+        bid_round_1 = cleaned_data.get("bid_round_1")
+
+        if not attending and not bid_round_1:
+            self.add_error("bid_round_1", "Gebote sind erforderlich, wenn du nicht teilnimmst.")
+            self.add_error("bid_round_2", "Gebote sind erforderlich, wenn du nicht teilnimmst.")
+            self.add_error("bid_round_3", "Gebote sind erforderlich, wenn du nicht teilnimmst.")
+
     def get_bids(self):
         """Return {round_number: amount} for non-empty bid fields."""
         bids = {}

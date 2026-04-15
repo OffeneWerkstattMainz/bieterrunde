@@ -9,6 +9,7 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.utils.formats import localize
 from django.utils.text import slugify
 from django_htmx.http import HttpResponseClientRefresh
 from guest_user.decorators import allow_guest_user
@@ -344,9 +345,11 @@ def voter_registration(request, voting_id, member_id, auth_token):
             return HttpResponseForbidden(
                 "Registrierung ist nicht mehr möglich, da die erste Runde bereits begonnen hat."
             )
-        voting_voter = VotingVoter.objects.create(voting=voting, voter=voter)
 
     if request.method == "POST":
+        if vv_missing:
+            voting_voter = VotingVoter.objects.create(voting=voting, voter=voter)
+
         form = VoterRegistrationForm(request.POST)
         if form.is_valid():
             attending = form.cleaned_data["attending"]
@@ -372,12 +375,12 @@ def voter_registration(request, voting_id, member_id, auth_token):
         existing_bids = dict(
             voting.bids.filter(member_id=member_id).values_list("round_number", "amount")
         )
-        initial = {
-            "attending": voting_voter.absent_from_round is None if not vv_missing else False
-        }
+        initial = {"attending": False if vv_missing else voting_voter.absent_from_round is None}
         for round_number, amount in existing_bids.items():
             initial[f"bid_round_{round_number}"] = amount
         form = VoterRegistrationForm(initial=initial)
+        target_bid = localize(voting.average_contribution_target, use_l10n=True)
+        form.fields["bid_round_1"].widget.attrs.update({"placeholder": f"Richtwert: {target_bid}"})
 
     return render(
         request,

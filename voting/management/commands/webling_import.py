@@ -19,7 +19,6 @@ _Y = partial(djclick.style, fg="yellow")
 @djclick.command()
 @djclick.option(
     "--api-key",
-    required=True,
     help="Webling API, by default will be tried to be loaded from settings.",
     envvar="WEBLING_API_KEY",
 )
@@ -78,7 +77,7 @@ def command(
             for api_id, member in progress:
                 props = member["properties"]
                 member_id = props["Mitglieder ID"]
-                name_parts = [props.get("Vorname", ""), props.get("Nachname", "")]
+                name_parts = [props.get("Vorname", ""), props.get("Name", "")]
                 name = " ".join(p for p in name_parts if p) or f"Mitglied {member_id}"
 
                 if not dry_run:
