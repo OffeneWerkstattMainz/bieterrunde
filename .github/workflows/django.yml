@@ -66,8 +66,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=pep440,pattern={{version}}
+            type=pep440,pattern={{major}}.{{minor}}
             type=raw,value=latest
 
       - name: Build and push
