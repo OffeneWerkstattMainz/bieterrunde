@@ -23,19 +23,20 @@ services:
   worker:
     image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:0.9.0b3}
     restart: unless-stopped
-    scale: 2
+    scale: ${WORKER_CONCURRENCY:-2}
     environment:
       DB_HOST: db
       RQ_HOST: valkey
       SECRET_KEY_FILE: "/data/secret_key.txt"
-      WORKER_CONCURRENCY:
+      WEBLING_API_KEY:
     volumes:
       - ${DATA_DIR:-./data}/web:/data
       - web-static:/data/static
     depends_on:
       - db
       - valkey
-    entrypoint: "uv run --group prod --no-group dev manage.py rqworker --job-class django_tasks_rq.Job"
+    command:
+      - worker
 
   db:
     image: postgres:16

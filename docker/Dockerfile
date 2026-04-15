@@ -19,4 +19,4 @@ RUN uv sync --group prod --no-group dev
 ENV DJANGO_SETTINGS_MODULE=bieterrunde.settings_prod
 EXPOSE 8000
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
-CMD ["--forwarded-allow-ips", "*", "--bind", "0.0.0.0:8000", "bieterrunde.wsgi"]
+CMD ["web", "--forwarded-allow-ips", "*", "--bind", "0.0.0.0:8000", "bieterrunde.wsgi"]
