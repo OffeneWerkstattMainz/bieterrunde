@@ -1,6 +1,6 @@
 services:
   web:
-    image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:0.9.0b3}
+    image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:0.9.0b5}
     restart: unless-stopped
     environment:
       ALLOWED_HOSTS: "${DOMAIN}"
@@ -21,7 +21,7 @@ services:
       caddy.reverse_proxy: "{{ upstreams 8000 }}"
 
   worker:
-    image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:0.9.0b3}
+    image: ${BIETERRUNDE_IMAGE:-ghcr.io/offenewerkstattmainz/bieterrunde:0.9.0b5}
     restart: unless-stopped
     scale: ${WORKER_CONCURRENCY:-2}
     environment:
