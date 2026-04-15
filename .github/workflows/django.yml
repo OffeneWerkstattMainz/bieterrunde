@@ -15,7 +15,6 @@ jobs:
       - uses: j178/prek-action@v2
 
   test:
-    needs: prek
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
@@ -40,7 +39,9 @@ jobs:
         uv run pytest
 
   docker:
-    needs: test
+    needs:
+      - prek
+      - test
     if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
