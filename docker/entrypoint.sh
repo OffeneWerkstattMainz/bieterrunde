@@ -14,6 +14,7 @@ case "$MODE" in
     ;;
   worker)
     uv run --group prod --no-group dev manage.py rqworker --job-class django_tasks_rq.Job
+    ;;
   *)
     echo "Unknown mode: $MODE"
     exit 1
