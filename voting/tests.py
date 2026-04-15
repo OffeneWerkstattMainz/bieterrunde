@@ -461,8 +461,8 @@ def test_voter_registration_get(client, voting):
         )
     )
     assert response.status_code == 200
-    # Voter should now be linked to the voting
-    assert VotingVoter.objects.filter(voting=voting, voter=voter).exists()
+    # Only calling get should not create a VotingVoter entry
+    assert not VotingVoter.objects.filter(voting=voting, voter=voter).exists()
 
 
 @pytest.mark.django_db
