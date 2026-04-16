@@ -1,10 +1,42 @@
 {% extends "voting/voting_base.html" %}
 {% block page-title %}Anmeldung - {% endblock %}
+{% block head %}
+	{{ block.super }}
+    <style>
+    header small {
+        float: right;
+        padding-top: 0.2rem;
+    }
+    label > input[type="radio"] {
+        display: none;
+    }
+    label:has(> input[value=False]) {
+        background-color: var(--pico-color-grey-150);
+    }
+    label:has(> input[value=False]:checked) {
+        background-color: var(--pico-color-red-450);
+    }
+    label:has(> input[value=True]) {
+        background-color: var(--pico-color-grey-150);
+    }
+    label:has(> input[value=True]:checked) {
+        background-color: var(--pico-color-green-350);
+    }
+    </style>
+    <script>
+    // scroll to first error on page load
+    document.addEventListener("DOMContentLoaded", function() {
+        const firstError = document.querySelector("input[aria-invalid='true']");
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    });
+    </script>
+{% endblock %}
 {% block content %}
     {{ block.super }}
     <article>
-        <header class="pico-background-slate">Anmeldung - {{ voter.name }}</header>
-        <p>Mitgliedsnummer: <b>{{ voter.member_id }}</b></p>
+        <header class="pico-background-slate">Anmeldung - {{ voter.name }}<small><i>Mitgliedsnummer: {{ voter.member_id }}</i></small></header>
         <p>
             Bitte teile uns mit ob du an der Mitgliederversamlung <b>"{{ voting.name }}"</b> am <b>{{ voting.date }}</b> teilnehmen wirst.
         </p>
@@ -12,19 +44,22 @@
             Wenn du <u>nicht</u> teilnehmen kannst gib <b>unbedingt deine Gebote für die Bieterrunde ein</b>.
         </p>
         <blockquote class="pico-color-orange">
-            <b><u>Falls du keine Gebote eingibst und nicht an der Bieterrunde vor Ort teilnimmst wird dein Beitrag automatisch auf den neuen Richtwert von {{ voting.average_contribution_target }} € gesetzt!</u></b>
+            <b><u>Falls du keine Gebote eingibst und nicht an der Bieterrunde vor Ort teilnimmst, wird dein Beitrag automatisch auf den neuen Richtwert von {{ voting.average_contribution_target }} € gesetzt!</u></b>
         </blockquote>
 
         <p>
-            Wenn du dir nicht sicher bist, ob du teilnehmen wirst, gib bitte sicherheitshalber Gebote ein.
-            Du kannst trotzdem an der MV teilnehmen.
+            Wenn du dir nicht sicher bist, ob du teilnehmen wirst, wähle bitte sicherheitshalber 'Nein' aus und gib Gebote ein. <br>
+            Du kannst trotzdem an der MV teilnehmen und vor Ort abstimmen.
+        </p>
+        <p>
+            Du kannst diese Seite jederzeit erneut über den Link in der E-Mail aufrufen und deine Angaben ändern.
         </p>
         <hr>
         <form method="post">
             {% csrf_token %}
             {% for field in form %}
                 {% if field.name == "bid_round_1" %}
-                    <fieldset role="group">
+                    <fieldset class="grid">
                 {% endif %}
                 <label for="{{ field.id_for_label }}">
                     {{ field.label }}
@@ -43,7 +78,7 @@
                     </fieldset>
                 {% endif %}
             {% endfor %}
-            <input type="submit" value="Speichern">
+            <input id="form_submit" type="submit" value="Speichern">
         </form>
     </article>
 {% endblock %}

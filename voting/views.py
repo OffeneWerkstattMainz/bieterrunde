@@ -357,12 +357,17 @@ def voter_registration(request, voting_id, member_id, auth_token):
             voting_voter.save()
 
             for round_number, amount in form.get_bids().items():
-                Bid.objects.update_or_create(
-                    voting=voting,
-                    member_id=member_id,
-                    round_number=round_number,
-                    defaults={"amount": amount},
-                )
+                if amount is not None:
+                    Bid.objects.update_or_create(
+                        voting=voting,
+                        member_id=member_id,
+                        round_number=round_number,
+                        defaults={"amount": amount},
+                    )
+                else:
+                    Bid.objects.filter(
+                        voting=voting, member_id=member_id, round_number=round_number
+                    ).delete()
 
             messages.success(request, "Deine Angaben wurden gespeichert.")
             return redirect(

@@ -496,6 +496,40 @@ def test_voter_registration_post_not_attending(client, voting):
     assert voting.bids.filter(member_id=303, round_number=1).first().amount == Decimal("45")
 
 
+@pytest.mark.parametrize(
+    ("bid_amounts", "is_valid"),
+    [(["-10"], False), (["20", "5"], False), (["30", "", "25"], False), (["30", "40"], True)],
+)
+@pytest.mark.django_db
+def test_voter_registration_post_invalid_bids(client, voting, bid_amounts, is_valid):
+    voter = make_voter(303)
+    token = compute_member_token(303)
+    url = reverse(
+        "voting:voter-registration",
+        kwargs={"voting_id": voting.id, "member_id": 303, "auth_token": token},
+    )
+    post_data = {}
+    for i, amount in enumerate(bid_amounts, start=1):
+        if amount:
+            post_data[f"bid_round_{i}"] = amount
+    response = client.post(url, post_data)
+    if is_valid:
+        assert response.status_code == 302
+        vv = VotingVoter.objects.get(voting=voting, voter=voter)
+        assert vv.absent_from_round == 1  # not attending
+        assert voting.bids.filter(member_id=303, round_number=1).first().amount == Decimal(
+            bid_amounts[0]
+        )
+    else:
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert (
+            "Gebote dürfen nicht negativ sein" in content
+            or "Gebote dürfen nicht niedriger sein als vorherige Runden" in content
+            or "Es darf keine Lücken in den Geboten geben." in content
+        )
+
+
 # ---------------------------------------------------------------------------
 # Voter management view tests
 # ---------------------------------------------------------------------------

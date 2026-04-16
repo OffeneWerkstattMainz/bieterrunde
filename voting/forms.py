@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.forms import (
     ModelForm,
@@ -9,7 +11,7 @@ from django.forms import (
     CharField,
     DecimalField,
     IntegerField,
-    CheckboxInput,
+    RadioSelect,
 )
 
 from voting.models import Voting, Vote, Voter, VotingVoter
@@ -53,7 +55,7 @@ class VoterRegistrationForm(InvalidFormMixin, Form):
     attending = BooleanField(
         label="Ich werde teilnehmen",
         required=False,
-        widget=CheckboxInput(attrs={"role": "switch"}),
+        widget=RadioSelect(choices=((False, "Nein"), (True, "Ja"))),
     )
     bid_round_1 = DecimalField(
         label="Gebot Runde 1 (€)", required=False, max_digits=10, decimal_places=2, localize=True
@@ -76,14 +78,40 @@ class VoterRegistrationForm(InvalidFormMixin, Form):
             self.add_error("bid_round_2", "Gebote sind erforderlich, wenn du nicht teilnimmst.")
             self.add_error("bid_round_3", "Gebote sind erforderlich, wenn du nicht teilnimmst.")
 
-    def get_bids(self):
-        """Return {round_number: amount} for non-empty bid fields."""
-        bids = {}
-        for round_number in range(1, 4):
-            amount = self.cleaned_data.get(f"bid_round_{round_number}")
-            if amount is not None:
-                bids[round_number] = amount
-        return bids
+        bids = self.get_bids()
+        bid_matrix = [bid is None for bid in bids.values()]
+        match bid_matrix:
+            case [True, False, _]:
+                self.add_error("bid_round_1", "Es darf keine Lücken in den Geboten geben.")
+            case [False, True, False]:
+                self.add_error("bid_round_2", "Es darf keine Lücken in den Geboten geben.")
+            case [True, True, False]:
+                self.add_error("bid_round_1", "Es darf keine Lücken in den Geboten geben.")
+                self.add_error("bid_round_2", "Es darf keine Lücken in den Geboten geben.")
+
+        last = 0
+        for round_number, bid in bids.items():
+            if bid is None:
+                break
+            if bid < 0:
+                self.add_error(
+                    f"bid_round_{round_number}",
+                    "Gebote dürfen nicht negativ sein.",
+                )
+                continue
+            if bid < last:
+                self.add_error(
+                    f"bid_round_{round_number}",
+                    "Gebote dürfen nicht niedriger sein als vorherige Runden.",
+                )
+            last = bid
+
+    def get_bids(self) -> dict[int, Decimal | None]:
+        """Return {round_number: amount} where amount can also be None"""
+        return {
+            round_number: self.cleaned_data.get(f"bid_round_{round_number}")
+            for round_number in range(1, 4)
+        }
 
 
 class VotingVoterAddForm(InvalidFormMixin, Form):

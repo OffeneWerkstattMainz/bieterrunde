@@ -23,8 +23,8 @@ class Voter(models.Model):
     name = models.CharField("Name", max_length=255)
 
     class Meta:
-        verbose_name = "Wähler"
-        verbose_name_plural = "Wähler"
+        verbose_name = "Teilnehmer"
+        verbose_name_plural = "Teilnehmer"
         ordering = ["member_id"]
 
     def __str__(self):
