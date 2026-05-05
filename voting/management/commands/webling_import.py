@@ -7,8 +7,7 @@ from django.core.management import CommandError
 from django.conf import settings
 from voting.models import Voter
 from voting.utils.hmac_auth import compute_member_token
-from voting.utils.webling_api import WeblingAPI
-
+from voting.utils.webling_api import WeblingAPI, WEBLING_FIELD_NAME_BIETERRUNDE_AUTH_TOKEN
 
 _R = partial(djclick.style, fg="red")
 _G = partial(djclick.style, fg="green")
@@ -72,6 +71,7 @@ def command(
 
         created = 0
         updated = 0
+        token_updated = 0
 
         with djclick.progressbar(members.items(), label=_Y("Importing...")) as progress:
             for api_id, member in progress:
@@ -92,10 +92,12 @@ def command(
 
                     # Compute and write auth token to Webling
                     token = compute_member_token(member_id)
-                    api.update_member_auth_token(api_id, token)
+                    if props[WEBLING_FIELD_NAME_BIETERRUNDE_AUTH_TOKEN] != token:
+                        api.update_member_auth_token(api_id, token)
+                        token_updated += 1
 
         djclick.echo(
-            f"\n{_G('Done.')} {_B(created)} {_G('created,')} {_B(updated)} {_G('updated.')}"
+            f"\n{_G('Done.')} {_B(created)} {_G('created')}, {_B(updated)} {_G('updated')}, {_B(token_updated)} {_G('auth tokens updated')}."
         )
 
     if dry_run:

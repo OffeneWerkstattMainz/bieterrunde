@@ -3,6 +3,8 @@ from dataclasses import dataclass
 import httpx
 from more_itertools import first
 
+WEBLING_FIELD_NAME_BIETERRUNDE_AUTH_TOKEN = "Bieterrunden-Auth-Token"
+
 API_BASE = "https://owm.webling.ch/api/1"
 
 
@@ -79,7 +81,7 @@ class WeblingAPI:
         response = self.client.put(
             f"{API_BASE}/member/{member_id}",
             headers={"apikey": self.api_key},
-            json={"properties": {"Bieterrunden-Auth-Token": token}},
+            json={"properties": {WEBLING_FIELD_NAME_BIETERRUNDE_AUTH_TOKEN: token}},
         )
         response.raise_for_status()
 
