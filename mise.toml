@@ -4,7 +4,11 @@ run = "uv run python manage.py runserver 0.0.0.0:8080"
 
 [tasks.tests]
 description = "Run tests"
-run = "uv run pytest"
+usage = '''
+flag "--lf" "Run only the tests that failed in the last run"
+flag "--last-failed" "Run only the tests that failed in the last run"
+'''
+run = "uv run pytest ${usage_last_failed:+--lf}${usage_lf:+--lf}"
 
 [tasks.build-docker]
 description = "Build the docker image"

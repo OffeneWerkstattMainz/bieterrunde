@@ -10,6 +10,8 @@ LOGGING["loggers"][""] = {
     "level": "DEBUG",
     "handlers": ["console"],
 }
+LOGGING["loggers"]["httpx"] = {"level": "WARNING"}
+LOGGING["loggers"]["httpcore"] = {"level": "INFO"}
 
 TASKS = {
     "default": {
