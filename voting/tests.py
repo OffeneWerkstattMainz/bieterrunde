@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.urls import reverse
+from django.utils import timezone
 
 from voting.models import Bid, Vote, Voter, Voting, VotingVoter
 from voting.utils.hmac_auth import compute_member_token, verify_member_token
@@ -28,7 +29,7 @@ def make_voting(owner, voter_count=2, total_count=2, budget_goal=Decimal("100"))
         budget_goal=budget_goal,
         total_count=total_count,
         owner=owner,
-        date=datetime.date(2024, 1, 1),
+        date=(timezone.now() + datetime.timedelta(days=5)),
     )
     for i in range(1, voter_count + 1):
         voter = make_voter(i)

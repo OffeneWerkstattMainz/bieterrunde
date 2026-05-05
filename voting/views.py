@@ -340,6 +340,19 @@ def voter_registration(request, voting_id, member_id, auth_token):
     voter = get_object_or_404(Voter, member_id=member_id)
     voting_voter = VotingVoter.objects.filter(voting=voting, voter=voter).first()
     vv_missing = voting_voter is None
+
+    if timezone.now() > voting.registration_deadline:
+        return render(
+            request,
+            "voting/voter_registration.html",
+            dict(
+                voting=voting,
+                voter=voter,
+                error_message="Registrierung ist nicht mehr möglich, da die Anmeldefrist abgelaufen ist.",
+            ),
+            status=403,
+        )
+
     if vv_missing:
         if voting.rounds_started:
             return HttpResponseForbidden(

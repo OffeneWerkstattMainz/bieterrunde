@@ -42,7 +42,7 @@ class Voting(models.Model):
         validators=[MinValueValidator(1)],
         help_text="Anzahl der Mitglieder insgesamt",
     )
-    date = models.DateField("Datum")
+    date = models.DateTimeField("Datum")
     voters = models.ManyToManyField(Voter, through="VotingVoter", related_name="votings")
 
     class Meta:
@@ -128,6 +128,10 @@ class Voting(models.Model):
     @property
     def average_contribution_target(self):
         return self.budget_goal / self.total_count
+
+    @property
+    def registration_deadline(self):
+        return self.date.replace(hour=0, minute=0, second=0)
 
     @atomic
     def import_bids_csv(self, csv_lines: list[str]):
