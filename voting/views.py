@@ -332,7 +332,9 @@ def voting_voter_edit(request, voting_id, voting_voter_id):
     )
 
 
-def voter_registration(request, voting_id, member_id, auth_token):
+def voter_registration(
+    request, voting_id: str, member_id: int, auth_token: str, just_saved: int = 0
+):
     if not verify_member_token(member_id, auth_token):
         return HttpResponseForbidden("Ungültiger Authentifizierungstoken.")
 
@@ -355,10 +357,19 @@ def voter_registration(request, voting_id, member_id, auth_token):
 
     if vv_missing:
         if voting.rounds_started:
-            return HttpResponseForbidden(
-                "Registrierung ist nicht mehr möglich, da die erste Runde bereits begonnen hat."
+            return render(
+                request,
+                "voting/voter_registration.html",
+                dict(
+                    voting=voting,
+                    voter=voter,
+                    error_message="Registrierung ist nicht mehr möglich, da die erste Runde bereits begonnen hat.",
+                ),
+                status=403,
             )
 
+    initial = {}
+    form = None
     if request.method == "POST":
         if vv_missing:
             voting_voter = VotingVoter.objects.create(voting=voting, voter=voter)
@@ -388,6 +399,7 @@ def voter_registration(request, voting_id, member_id, auth_token):
                 voting_id=voting_id,
                 member_id=member_id,
                 auth_token=auth_token,
+                just_saved=1,
             )
     else:
         existing_bids = dict(
@@ -403,5 +415,14 @@ def voter_registration(request, voting_id, member_id, auth_token):
     return render(
         request,
         "voting/voter_registration.html",
-        dict(voting=voting, voter=voter, voting_voter=voting_voter, form=form),
+        dict(
+            voting=voting,
+            voter=voter,
+            voting_voter=voting_voter,
+            form=form,
+            # For post we always want to show the form because if we reach here the form has to be invalid
+            already_registered=request.method != "POST" and not vv_missing,
+            current=initial,
+            just_saved=just_saved,
+        ),
     )

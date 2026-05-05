@@ -30,4 +30,9 @@ urlpatterns = [
         views.voter_registration,
         name="voter-registration",
     ),
+    path(
+        "registration/<uuid:voting_id>/<int:member_id>/<str:auth_token>/<int:just_saved>/",
+        views.voter_registration,
+        name="voter-registration",
+    ),
 ]

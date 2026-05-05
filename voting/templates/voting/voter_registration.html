@@ -22,6 +22,9 @@
     label:has(> input[value=True]:checked) {
         background-color: var(--pico-color-green-350);
     }
+    .hidden {
+        display: none;
+    }
     </style>
     <script>
     // scroll to first error on page load
@@ -35,50 +38,79 @@
 {% endblock %}
 {% block content %}
     {{ block.super }}
+    <hgroup>
+        <h3>Mitgliederversammlung am {{ voting.date|date }} um {{ voting.date|time }} Uhr</h3>
+        <p>Anmeldung</p>
+    </hgroup>
     <article>
-        <header class="pico-background-slate">Anmeldung - {{ voter.name }}<small><i>Mitgliedsnummer: {{ voter.member_id }}</i></small></header>
-        <p>
-            Bitte teile uns mit ob du an der Mitgliederversamlung <b>"{{ voting.name }}"</b> am <b>{{ voting.date }}</b> teilnehmen wirst.
-        </p>
-        <p>
-            Wenn du <u>nicht</u> teilnehmen kannst gib <b>unbedingt deine Gebote für die Bieterrunde ein</b>.
-        </p>
-        <blockquote class="pico-color-orange">
-            <b><u>Falls du keine Gebote eingibst und nicht an der Bieterrunde vor Ort teilnimmst, wird dein Beitrag automatisch auf den neuen Richtwert von {{ voting.average_contribution_target }} € gesetzt!</u></b>
-        </blockquote>
+        <header class="pico-background-slate">{{ voter.name }}<small><i>Mitgliedsnummer: {{ voter.member_id }}</i></small></header>
+        {% if error_message %}
+            <blockquote class="pico-color-red-450">
+                {{ error_message }}
+            </blockquote>
+        {% else %}
+            {% if already_registered %}
+                <div id="already_registered_info">
+                    <h4>Deine Rückmeldung zur Teilnahme an der Mitgliederversammlung wurde {% if not just_saved %}bereits {% endif %}gespeichert.</h4>
+                    <p>Du hast die folgenden Angaben gemacht:</p>
+                    <ul>
+                        <li>Ich werde teilnehmen: <b class="pico-color-{{ current.attending|yesno:"green,red" }}">{{ current.attending|yesno:"Ja,Nein" }}</b></li>
+                        <li>Deine Gebote für die Bieterrunde:
+                            <ul>
+                                <li>Runde 1: <b>{{ current.bid_round_1|default:"-" }}</b> €</li>
+                                <li>Runde 2: <b>{{ current.bid_round_2|default:"-" }}</b> €</li>
+                                <li>Runde 3: <b>{{ current.bid_round_3|default:"-" }}</b> €</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <button class="secondary" hx-on:click="htmx.toggleClass('#already_registered_info', 'hidden');htmx.toggleClass('#change_form', 'hidden')">Antwort ändern</button>
+                </div>
+            {% endif %}
+            <div id="change_form" class="{{ already_registered|yesno:"hidden," }}">
+                <p>
+                    Bitte teile uns mit ob du an der Mitgliederversamlung <b>"{{ voting.name }}"</b> am <b>{{ voting.date|date }}</b> um <b>{{ voting.date|time }} Uhr</b> teilnehmen wirst.
+                </p>
+                <p>
+                    Wenn du <u>nicht</u> teilnehmen kannst gib <b>unbedingt deine Gebote für die Bieterrunde ein</b>.
+                </p>
+                <blockquote class="pico-color-orange">
+                    <b><u>Falls du keine Gebote eingibst und nicht an der Bieterrunde vor Ort teilnimmst, wird dein Beitrag automatisch auf den neuen Richtwert von {{ voting.average_contribution_target }} € gesetzt!</u></b>
+                </blockquote>
 
-        <p>
-            Wenn du dir nicht sicher bist, ob du teilnehmen wirst, wähle bitte sicherheitshalber 'Nein' aus und gib Gebote ein. <br>
-            Du kannst trotzdem an der MV teilnehmen und vor Ort abstimmen.
-        </p>
-        <p>
-            Du kannst diese Seite jederzeit erneut über den Link in der E-Mail aufrufen und deine Angaben ändern.
-        </p>
-        <hr>
-        <form method="post">
-            {% csrf_token %}
-            {% for field in form %}
-                {% if field.name == "bid_round_1" %}
-                    <fieldset class="grid">
-                {% endif %}
-                <label for="{{ field.id_for_label }}">
-                    {{ field.label }}
-                    {{ field }}
-                    {% if field.errors %}
-                        <small id="{{ field.name }}_invalid">{% for error in field.errors %}
-                            {{ error }}
-                        {% endfor %}
-                        </small>
-                    {% endif %}
-                </label>
-                {% if field.name == "attending" %}
-                    <hr>
-                {% endif %}
-                {% if field.name == "bid_round_3" %}
-                    </fieldset>
-                {% endif %}
-            {% endfor %}
-            <input id="form_submit" type="submit" value="Speichern">
-        </form>
+                <p>
+                    Wenn du dir nicht sicher bist, ob du teilnehmen wirst, wähle bitte sicherheitshalber 'Nein' aus und gib Gebote ein. <br>
+                    Du kannst trotzdem an der MV teilnehmen und vor Ort abstimmen.
+                </p>
+                <p>
+                    Du kannst diese Seite jederzeit erneut über den Link in der E-Mail aufrufen und deine Angaben ändern.
+                </p>
+                <hr>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        {% if field.name == "bid_round_1" %}
+                            <fieldset class="grid">
+                        {% endif %}
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <small id="{{ field.name }}_invalid">{% for error in field.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                                </small>
+                            {% endif %}
+                        </label>
+                        {% if field.name == "attending" %}
+                            <hr>
+                        {% endif %}
+                        {% if field.name == "bid_round_3" %}
+                            </fieldset>
+                        {% endif %}
+                    {% endfor %}
+                    <input id="form_submit" type="submit" value="Speichern">
+                </form>
+            </div>
+        {% endif %}
     </article>
 {% endblock %}
