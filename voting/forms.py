@@ -73,7 +73,7 @@ class VoterRegistrationForm(InvalidFormMixin, Form):
         attending = cleaned_data.get("attending")
         bid_round_1 = cleaned_data.get("bid_round_1")
 
-        if not attending and not bid_round_1:
+        if not attending and bid_round_1 is None:
             self.add_error("bid_round_1", "Gebote sind erforderlich, wenn du nicht teilnimmst.")
             self.add_error("bid_round_2", "Gebote sind erforderlich, wenn du nicht teilnimmst.")
             self.add_error("bid_round_3", "Gebote sind erforderlich, wenn du nicht teilnimmst.")

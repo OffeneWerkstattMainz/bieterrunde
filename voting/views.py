@@ -408,6 +408,7 @@ def voter_registration(
         initial = {"attending": False if vv_missing else voting_voter.absent_from_round is None}
         for round_number, amount in existing_bids.items():
             initial[f"bid_round_{round_number}"] = amount
+            print(f"round {round_number}: {amount} ({type(amount)})")
         form = VoterRegistrationForm(initial=initial)
         target_bid = localize(voting.average_contribution_target, use_l10n=True)
         form.fields["bid_round_1"].widget.attrs.update({"placeholder": f"Richtwert: {target_bid}"})

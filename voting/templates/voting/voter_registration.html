@@ -57,9 +57,9 @@
                         <li>Ich werde teilnehmen: <b class="pico-color-{{ current.attending|yesno:"green,red" }}">{{ current.attending|yesno:"Ja,Nein" }}</b></li>
                         <li>Deine Gebote für die Bieterrunde:
                             <ul>
-                                <li>Runde 1: <b>{{ current.bid_round_1|default:"-" }}</b> €</li>
-                                <li>Runde 2: <b>{{ current.bid_round_2|default:"-" }}</b> €</li>
-                                <li>Runde 3: <b>{{ current.bid_round_3|default:"-" }}</b> €</li>
+                                <li>Runde 1: {% if current.bid_round_1 >= 0 %}<b>{{ current.bid_round_1 }}</b> €{% else %}-{% endif %}</li>
+                                <li>Runde 2: {% if current.bid_round_2 >= 0 %}<b>{{ current.bid_round_2 }}</b> €{% else %}-{% endif %}</li>
+                                <li>Runde 3: {% if current.bid_round_3 >= 0 %}<b>{{ current.bid_round_3 }}</b> €{% else %}-{% endif %}</li>
                             </ul>
                         </li>
                     </ul>
