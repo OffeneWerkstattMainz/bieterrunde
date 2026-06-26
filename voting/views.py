@@ -371,14 +371,17 @@ def voter_registration(
     initial = {}
     form = None
     if request.method == "POST":
-        if vv_missing:
-            voting_voter = VotingVoter.objects.create(voting=voting, voter=voter)
-
         form = VoterRegistrationForm(request.POST)
         if form.is_valid():
             attending = form.cleaned_data["attending"]
-            voting_voter.absent_from_round = None if attending else 1
-            voting_voter.save()
+            absent_from_round = None if attending else 1
+            if vv_missing:
+                voting_voter = VotingVoter.objects.create(
+                    voting=voting, voter=voter, absent_from_round=absent_from_round
+                )
+            else:
+                voting_voter.absent_from_round = absent_from_round
+                voting_voter.save()
 
             for round_number, amount in form.get_bids().items():
                 if amount is not None:
