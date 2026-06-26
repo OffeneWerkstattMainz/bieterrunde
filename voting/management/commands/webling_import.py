@@ -7,7 +7,7 @@ from django.core.management import CommandError
 from django.conf import settings
 from voting.models import Voter
 from voting.utils.hmac_auth import compute_member_token
-from voting.utils.webling_api import WeblingAPI, WEBLING_FIELD_NAME_BIETERRUNDE_AUTH_TOKEN
+from voting.utils.webling_api import WeblingAPI, PROP_BIETERRUNDE_AUTH_TOKEN
 
 _R = partial(djclick.style, fg="red")
 _G = partial(djclick.style, fg="green")
@@ -92,7 +92,7 @@ def command(
 
                     # Compute and write auth token to Webling
                     token = compute_member_token(member_id)
-                    if props[WEBLING_FIELD_NAME_BIETERRUNDE_AUTH_TOKEN] != token:
+                    if props[PROP_BIETERRUNDE_AUTH_TOKEN] != token:
                         api.update_member_auth_token(api_id, token)
                         token_updated += 1
 

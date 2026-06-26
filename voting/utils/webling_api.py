@@ -3,7 +3,9 @@ from dataclasses import dataclass
 import httpx
 from more_itertools import first
 
-WEBLING_FIELD_NAME_BIETERRUNDE_AUTH_TOKEN = "Bieterrunden-Auth-Token"
+PROP_BIETERRUNDE_AUTH_TOKEN = "Bieterrunden-Auth-Token"
+PROP_MEMBER_ID = "Mitglieder ID"
+PROP_MISSING_VOTING_ROUNDS = "Fehlendes Bieterrunden-Gebot"
 
 API_BASE = "https://owm.webling.ch/api/1"
 
@@ -70,6 +72,14 @@ class WeblingAPI:
         )
         response.raise_for_status()
 
+    def set_member_non_voting(self, member_id: int, keys_to_set: list[str]):
+        response = self.client.put(
+            f"{API_BASE}/member/{member_id}",
+            headers={"apikey": self.api_key},
+            json={"properties": {"Fehlendes Bieterrunden-Gebot": keys_to_set}},
+        )
+        response.raise_for_status()
+
     def get_member_id_by_mitglieder_id(self, mitglieder_id: int) -> int:
         ids = self.fetch_members_by_filter(f"`Mitglieder ID` = {mitglieder_id}", full=False)
         if len(ids) != 1:
@@ -81,7 +91,7 @@ class WeblingAPI:
         response = self.client.put(
             f"{API_BASE}/member/{member_id}",
             headers={"apikey": self.api_key},
-            json={"properties": {WEBLING_FIELD_NAME_BIETERRUNDE_AUTH_TOKEN: token}},
+            json={"properties": {PROP_BIETERRUNDE_AUTH_TOKEN: token}},
         )
         response.raise_for_status()
 
