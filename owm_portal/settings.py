@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django_htmx",
     "core",
     "voting",
+    "signup",
     "django.forms",
     "django_tasks",
 ]
@@ -174,3 +175,29 @@ PROJECT_VERSION = _get_version()
 CREATE_VOTING_ACCESS_CODE = os.environ.get("CREATE_VOTING_ACCESS_CODE")
 
 WEBLING_API_KEY = os.environ.get("WEBLING_API_KEY")
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_FROM", "webmaster@localhost")
+
+
+def _int_or_none(value: str | None) -> int | None:
+    return int(value) if value else None
+
+
+# Mitgliedsanmeldung (Double-Opt-In für das Webling-WordPress-Plugin)
+# Webling-Gruppe, in die das Anmeldeformular neue Mitglieder einträgt
+SIGNUP_PENDING_GROUP_ID = _int_or_none(os.environ.get("SIGNUP_PENDING_GROUP_ID"))
+# Webling-Gruppe, in die bestätigte Anmeldungen verschoben werden
+SIGNUP_CONFIRMED_GROUP_ID = _int_or_none(os.environ.get("SIGNUP_CONFIRMED_GROUP_ID"))
+# Öffentliche Basis-URL des Portals für die Links in den E-Mails, z.B. https://portal.ow-mainz.de
+SIGNUP_BASE_URL = os.environ.get("SIGNUP_BASE_URL", "")
+# Empfänger der Meldung über bestätigte Anmeldungen, durch Komma getrennt
+SIGNUP_NOTIFY_EMAILS = [
+    email.strip()
+    for email in os.environ.get("SIGNUP_NOTIFY_EMAILS", "").split(",")
+    if email.strip()
+]
+# Sekunden zwischen zwei Abfragen der Gruppe in Webling
+SIGNUP_INTERVAL = int(os.environ.get("SIGNUP_INTERVAL", 120))
+SIGNUP_REMINDER_DAYS = int(os.environ.get("SIGNUP_REMINDER_DAYS", 3))
+SIGNUP_EXPIRY_DAYS = int(os.environ.get("SIGNUP_EXPIRY_DAYS", 14))

@@ -4,7 +4,7 @@ from django_tasks import task
 from voting.models import VotingVoter
 from logging import getLogger
 
-from voting.utils.webling_api import WeblingAPI
+from core.webling_api import WeblingAPI
 
 log = getLogger(__name__)
 

@@ -7,7 +7,7 @@ from django.core.management import CommandError
 from django.conf import settings
 from voting.models import Voter
 from voting.utils.hmac_auth import compute_member_token
-from voting.utils.webling_api import WeblingAPI, PROP_BIETERRUNDE_AUTH_TOKEN
+from core.webling_api import WeblingAPI, PROP_BIETERRUNDE_AUTH_TOKEN
 
 _R = partial(djclick.style, fg="red")
 _G = partial(djclick.style, fg="green")

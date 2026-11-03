@@ -6,6 +6,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("convert", include("guest_user.urls")),
     path("bieterrunde/", include(("voting.urls", "voting"), namespace="voting")),
+    path("anmeldung/", include(("signup.urls", "signup"), namespace="signup")),
     # The Bieterrunde used to live at the site root. Keep old links (e.g. registration links
     # sent to members) working.
     re_path(

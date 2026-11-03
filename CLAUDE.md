@@ -8,6 +8,7 @@ OWM Vereinsportal is a Django 5 backend for club-related tasks of Offene Werksta
 
 - `core` — start page (`/`), shared base template (`core/base.html`), static assets, form templates, context processors
 - `voting` — Bieterrunde: solidarity-based membership fee bidding rounds, mounted at `/bieterrunde/` (legacy root URLs redirect there)
+- `signup` — double opt-in for members created by the Webling WordPress plugin form, mounted at `/anmeldung/`; the task `process_signups` polls Webling, scheduled by RQ cron in `owm_portal/cron.py` (confirmation = group membership, deadlines from Webling `meta.created`; `PendingSignup` only records sent mails)
 
 The Django project package is `owm_portal/`. UI and data are in German. Key dependencies: django-htmx, django-guest-user, django-qr-code, django-click.
 
@@ -32,7 +33,7 @@ prek run                       # run all pre-commit checks (ruff lint+format, tr
 - Dev: `owm_portal/settings.py` — SQLite, DEBUG=True, ALLOWED_HOSTS=["*"]
 - Prod: `owm_portal/settings_prod.py` — PostgreSQL, WhiteNoise, secure cookies
 - Env vars for prod: `SECRET_KEY_FILE`, `ALLOWED_HOSTS`, `DB_HOST`, `DB_PORT`, `DB_NAME` (default `owm_portal`), `STATIC_ROOT`
-- Optional: `CREATE_VOTING_ACCESS_CODE`, `WEBLING_API_KEY`
+- Optional: `CREATE_VOTING_ACCESS_CODE`, `WEBLING_API_KEY`, `SIGNUP_*` (see README), `SMTP_*`, `EMAIL_FROM`
 
 ## Architecture notes
 
@@ -43,7 +44,7 @@ prek run                       # run all pre-commit checks (ruff lint+format, tr
 - Guest users (django-guest-user) can vote without registering; convertible to real accounts
 - `Voting` uses UUID primary keys
 - Absent members can have bids pre-imported from CSV; `apply_absent_votes()` applies them at round creation
-- Webling integration (optional HR export) requires `WEBLING_API_KEY` env var
+- Webling integration requires `WEBLING_API_KEY` env var; the shared client lives in `core/webling_api.py`
 
 ## Git workflow
 

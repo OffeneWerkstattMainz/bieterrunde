@@ -1,0 +1,25 @@
+{% extends "signup/base.html" %}
+{% block page-title %}Anmeldung bestätigen - {% endblock %}
+{% block content %}
+    <h1>Mitgliedsanmeldung</h1>
+    <article>
+        {% if state == "confirm" %}
+            <p>Hallo {{ firstname }},</p>
+            <p>bitte bestätige mit dem Button, dass du dich bei der Offenen Werkstatt Mainz e.V.
+                als Mitglied angemeldet hast.</p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="button-wide"><i class="bx bx-check"></i> Anmeldung bestätigen</button>
+            </form>
+        {% elif state == "done" %}
+            <p><i class="bx bx-check-circle"></i> Vielen Dank{% if firstname %}, {{ firstname }}{% endif %}!
+                Deine Anmeldung ist bestätigt. Wir melden uns in Kürze bei dir.</p>
+        {% elif state == "expired" %}
+            <p>Dieser Link ist abgelaufen oder die Anmeldung existiert nicht mehr.
+                Bitte melde dich erneut über unsere Webseite an.</p>
+        {% else %}
+            <p>Dieser Link ist ungültig. Bitte prüfe, ob du ihn vollständig aus der E-Mail
+                übernommen hast.</p>
+        {% endif %}
+    </article>
+{% endblock %}

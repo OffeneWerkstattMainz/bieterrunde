@@ -64,6 +64,34 @@ class WeblingAPI:
         assert isinstance(result, dict)  # make typecheck happy
         return result
 
+    def fetch_member(self, member_id: int) -> dict | None:
+        response = self.client.get(
+            f"{API_BASE}/member/{member_id}", headers={"apikey": self.api_key}
+        )
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return {"id": member_id, **response.json()}
+
+    def update_member(
+        self, member_id: int, properties: dict | None = None, parents: list[int] | None = None
+    ) -> None:
+        response = self.client.put(
+            f"{API_BASE}/member/{member_id}",
+            headers={"apikey": self.api_key},
+            json={
+                **({"properties": properties} if properties else {}),
+                **({"parents": parents} if parents else {}),
+            },
+        )
+        response.raise_for_status()
+
+    def delete_member(self, member_id: int) -> None:
+        response = self.client.delete(
+            f"{API_BASE}/member/{member_id}", headers={"apikey": self.api_key}
+        )
+        response.raise_for_status()
+
     def update_member_contribution(self, member_id: int, contribution: int):
         response = self.client.put(
             f"{API_BASE}/member/{member_id}",

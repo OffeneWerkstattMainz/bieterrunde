@@ -1,0 +1,9 @@
+{% autoescape off %}Hallo,
+
+eine neue Mitgliedsanmeldung wurde per E-Mail bestätigt und liegt jetzt in der Webling-Gruppe für neue Mitglieder:
+
+{% for name, value in fields.items %}{{ name }}: {{ value }}
+{% endfor %}
+Viele Grüße
+OWM Vereinsportal
+{% endautoescape %}

@@ -1,0 +1,14 @@
+{% autoescape off %}Hallo {{ firstname }},
+
+{% if reminder %}wir haben noch keine Bestätigung deiner Anmeldung bei der Offenen Werkstatt Mainz e.V. erhalten.{% else %}vielen Dank für deine Anmeldung bei der Offenen Werkstatt Mainz e.V.!{% endif %}
+
+Bitte bestätige über diesen Link, dass die Anmeldung von dir stammt:
+
+{{ url }}
+
+Ohne Bestätigung löschen wir deine Angaben am {{ delete_on|date:"d.m.Y" }}.
+Falls du dich nicht angemeldet hast, kannst du diese E-Mail einfach ignorieren.
+
+Viele Grüße
+Offene Werkstatt Mainz e.V.
+{% endautoescape %}

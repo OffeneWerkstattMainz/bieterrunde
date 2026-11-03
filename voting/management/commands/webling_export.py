@@ -5,7 +5,7 @@ from django.core.management import CommandError
 from djclick.params import ModelInstance
 
 from voting.models import VotingRound, Voter
-from voting.utils.webling_api import WeblingAPI, PROP_MEMBER_ID, PROP_MISSING_VOTING_ROUNDS
+from core.webling_api import WeblingAPI, PROP_MEMBER_ID, PROP_MISSING_VOTING_ROUNDS
 
 _R = partial(djclick.style, fg="red")
 _G = partial(djclick.style, fg="green")
